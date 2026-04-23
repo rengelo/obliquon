@@ -1,0 +1,2090 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Obliquon</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --ink: #eef4f7;
+        --muted: #b7c6ce;
+        --panel: #0f1418;
+        --edge: #37454d;
+        --gold: #f4d35e;
+        --bezel: #050709;
+        --bezel-edge: #1e272c;
+        --monitor: #10181d;
+        --score-strip: #0a0e12;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        min-height: 100%;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at top, rgba(80, 103, 116, .18), transparent 36%),
+          #06090b;
+        color: var(--ink);
+        font-family: Verdana, Arial, sans-serif;
+      }
+
+      .shell {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 18px;
+      }
+
+      .cabinet {
+        width: min(100%, 936px);
+        border: 4px solid var(--bezel-edge);
+        border-radius: 8px;
+        background: linear-gradient(180deg, #12181d, #0a0d10);
+        box-shadow:
+          0 26px 60px rgba(0, 0, 0, .6),
+          inset 0 1px 0 rgba(255, 255, 255, .05);
+        overflow: hidden;
+      }
+
+      .screen-bar,
+      .panel {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 18px;
+      }
+
+      .screen-bar {
+        background: var(--score-strip);
+        border-bottom: 2px solid #283239;
+      }
+
+      h1 {
+        margin: 0;
+        color: var(--gold);
+        font-family: "Courier New", monospace;
+        font-size: 30px;
+        font-weight: 700;
+        letter-spacing: 0;
+        text-shadow:
+          2px 2px 0 #7a5c12,
+          0 0 10px rgba(244, 211, 94, .08);
+      }
+
+      .hud,
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .hud span {
+        color: #d8e5ea;
+        font-family: "Courier New", monospace;
+        font-size: 15px;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .hud strong {
+        color: #ffffff;
+        font-weight: 700;
+      }
+
+      .hud .timer strong {
+        color: #ffd978;
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        aspect-ratio: 4 / 3;
+        background: var(--monitor);
+        border-top: 10px solid var(--bezel);
+        border-bottom: 10px solid var(--bezel);
+        box-shadow:
+          inset 0 0 0 2px #2b373f,
+          inset 0 0 0 14px #06090b;
+        image-rendering: pixelated;
+        touch-action: none;
+      }
+
+      .panel {
+        min-height: 64px;
+        background: #0a0e12;
+        border-top: 2px solid #283239;
+      }
+
+      .panel p {
+        margin: 0;
+        color: #eef4f7;
+        font-size: 15px;
+        font-family: "Courier New", monospace;
+      }
+
+      kbd {
+        min-width: 54px;
+        padding: 7px 9px;
+        border: 1px solid #3a474e;
+        border-radius: 6px;
+        background: #12181d;
+        color: #eef4f7;
+        font: 700 13px "Courier New", monospace;
+        text-align: center;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06);
+      }
+
+      .icon-button {
+        min-width: 72px;
+        padding: 7px 9px;
+        border: 1px solid #3a474e;
+        border-radius: 6px;
+        background: #12181d;
+        color: #eef4f7;
+        font: 700 13px "Courier New", monospace;
+        cursor: pointer;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06);
+      }
+
+      .icon-button:hover {
+        background: #182028;
+      }
+
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+        background: rgba(0, 0, 0, .72);
+      }
+
+      .modal-backdrop.is-open {
+        display: flex;
+      }
+
+      .modal {
+        width: min(100%, 520px);
+        border: 2px solid #26313a;
+        border-radius: 8px;
+        background: linear-gradient(180deg, #151c23, #10161b);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, .4);
+        padding: 18px;
+      }
+
+      .modal h2 {
+        margin: 0 0 10px;
+        color: var(--gold);
+        font: 700 26px "Courier New", monospace;
+      }
+
+      .modal p {
+        margin: 0 0 12px;
+        color: #d7e1e5;
+        line-height: 1.4;
+      }
+
+      .stats {
+        display: grid;
+        gap: 8px;
+        margin: 14px 0 16px;
+      }
+
+      .stats div {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 9px 10px;
+        border: 1px solid #2a3640;
+        border-radius: 6px;
+        background: #0d1216;
+        font: 700 14px "Courier New", monospace;
+      }
+
+      .share-actions,
+      .modal-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .modal-actions {
+        justify-content: center;
+      }
+
+      .share-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 16px 0 10px;
+        color: #dce6eb;
+        font: 700 16px "Courier New", monospace;
+      }
+
+      .share-header svg {
+        width: 18px;
+        height: 18px;
+        fill: #f4d35e;
+        flex: 0 0 auto;
+      }
+
+      .share-actions a,
+      .modal-actions button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--edge);
+        border-radius: 6px;
+        background: #10161b;
+        color: #eef6fb;
+        padding: 10px 12px;
+        font: 700 13px "Courier New", monospace;
+        text-decoration: none;
+        cursor: pointer;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
+      }
+
+      .share-actions a[aria-disabled="true"],
+      .modal-actions button[aria-disabled="true"] {
+        opacity: .45;
+        pointer-events: none;
+      }
+
+      .share-actions a:hover,
+      .modal-actions button:hover {
+        background: #182129;
+      }
+
+      .modal-actions .primary {
+        background: linear-gradient(180deg, #f7db74, #e9bc3d);
+        border-color: #e9bc3d;
+        color: #0f1418;
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, .38),
+          0 0 0 1px rgba(244, 211, 94, .14);
+      }
+
+      .modal-actions .primary:hover {
+        background: linear-gradient(180deg, #ffe28b, #efc64f);
+      }
+
+      .share-actions svg,
+      .modal-actions svg {
+        width: 16px;
+        height: 16px;
+        fill: currentColor;
+        flex: 0 0 auto;
+      }
+
+      @media (max-width: 640px) {
+        .shell {
+          padding: 8px;
+          place-items: start center;
+        }
+
+        .screen-bar,
+        .panel {
+          align-items: flex-start;
+          flex-direction: column;
+          padding: 10px;
+        }
+
+        h1 {
+          font-size: 26px;
+        }
+
+        .hud span,
+        .panel p {
+          font-size: 14px;
+        }
+      }
+    </style>
+
+    <!--
+      LEVEL DATA
+
+      Edit maps in the plain-text blocks below.
+      Each map must stay 16 columns by 12 rows.
+
+      Metadata directives:
+      - @player x y
+      - @target x y
+      - @enemy type1 x y
+      - @enemy type2 x y
+      - @enemy type3 x y
+
+      Coordinates use tile positions:
+      x = column 0-15
+      y = row 0-11
+
+      Tile format:
+      - 5 = flat
+      - 8 = north ramp
+      - 2 = south ramp
+      - 4 = west ramp
+      - 6 = east ramp
+      - 9 = northeast ramp
+      - 3 = southeast ramp
+      - 7 = northwest ramp
+      - 1 = southwest ramp
+      - G = northeast ramp, inverted paint
+      - E = southeast ramp, inverted paint
+      - T = northwest ramp, inverted paint
+      - I = southwest ramp, inverted paint
+      - B = blocker
+
+      This follows the numeric keypad.
+    -->
+
+    <script id="level01-data" type="text/plain">
+; 16 columns x 12 rows
+; 5 = flat
+; 8 = north ramp
+; 2 = south ramp
+; 4 = west ramp
+; 6 = east ramp
+; 9 = northeast ramp
+; 3 = southeast ramp
+; 7 = northwest ramp
+; 1 = southwest ramp
+; G = northeast ramp, inverted paint
+; E = southeast ramp, inverted paint
+; T = northwest ramp, inverted paint
+; I = southwest ramp, inverted paint
+; B = block
+; metadata examples:
+; @player 1 10
+; @target 5 4
+; @enemy type1 14 1
+
+@player 8 6
+@target 1 1
+@target 14 1
+@target 5 6
+@target 10 4
+@target 1 10
+@target 14 10
+@enemy type1 14 1
+@enemy type1 12 5
+@enemy type1 2 3
+
+5 5 5 3 E 5 5 5 5 5 5 I 1 5 5 5
+5 5 3 E 5 5 5 5 5 5 5 5 I 1 5 5
+5 3 E 5 3 2 2 2 2 2 2 1 5 I 1 5
+3 E 5 5 6 5 5 5 5 5 5 4 5 5 I 1
+E 5 5 5 6 B 5 5 5 5 5 4 5 5 5 I
+5 5 5 5 6 5 5 5 5 5 5 4 5 5 5 5
+5 5 5 5 6 5 5 5 5 5 B 4 5 5 5 5
+G 5 5 5 6 5 5 5 5 5 5 4 5 5 5 T
+9 G 5 5 9 8 8 8 8 8 8 7 5 5 T 7
+5 9 G 5 5 5 5 5 5 5 5 5 5 T 7 5
+5 5 9 G 5 5 5 5 5 5 5 5 T 7 5 5
+5 5 5 9 G 5 5 5 5 5 5 T 7 5 5 5
+    </script>
+
+    <script id="level02-data" type="text/plain">
+; 16 columns x 12 rows
+; 5 = flat
+; 8 = north ramp
+; 2 = south ramp
+; 4 = west ramp
+; 6 = east ramp
+; 9 = northeast ramp
+; 3 = southeast ramp
+; 7 = northwest ramp
+; 1 = southwest ramp
+; G = northeast ramp, inverted paint
+; E = southeast ramp, inverted paint
+; T = northwest ramp, inverted paint
+; I = southwest ramp, inverted paint
+; B = block
+
+@player 3 10
+@target 10 1
+@target 4 3
+@target 11 6
+@target 0 6
+@target 8 8
+@target 8 11
+@enemy type1 14 2
+@enemy type2 13 9
+@enemy type3 5 5
+@enemy type3 7 10
+
+5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
+5 B 5 5 5 5 5 5 5 5 5 5 5 5 B 5
+5 5 5 3 2 2 2 2 2 2 2 2 1 5 5 5
+5 5 5 6 5 5 5 5 5 5 5 5 4 5 5 5
+5 5 5 6 5 5 5 5 5 5 5 5 4 5 5 5
+5 5 5 6 5 5 5 5 5 5 5 5 4 5 5 5
+5 5 5 6 5 5 5 5 5 5 5 5 4 5 5 5
+5 5 5 6 5 5 5 5 5 5 5 5 4 5 5 5
+5 5 5 6 5 5 5 5 5 5 5 5 4 5 5 5
+5 5 5 9 8 8 8 8 8 8 8 8 7 5 5 5
+5 B 5 5 5 5 5 5 5 5 5 5 5 5 B 5
+5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
+
+
+    </script>
+
+    <script id="level03-data" type="text/plain">
+; 16 columns x 12 rows
+; 5 = flat
+; 8 = north ramp
+; 2 = south ramp
+; 4 = west ramp
+; 6 = east ramp
+; 9 = northeast ramp
+; 3 = southeast ramp
+; 7 = northwest ramp
+; 1 = southwest ramp
+; G = northeast ramp, inverted paint
+; E = southeast ramp, inverted paint
+; T = northwest ramp, inverted paint
+; I = southwest ramp, inverted paint
+; B = block
+
+@player 6 0
+@target 3 2
+@target 13 2
+@target 3 9
+@target 13 9
+@target 6 6
+@target 9 5
+@enemy type1 3 3
+@enemy type2 14 3
+@enemy type3 7 11
+@enemy type2 14 6
+
+5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
+5 B 5 5 5 3 2 2 2 2 1 5 5 5 B 5
+5 5 5 5 5 6 5 5 5 5 4 5 5 5 5 5
+5 5 5 5 5 6 5 5 5 5 4 5 5 5 5 5
+5 5 5 3 2 2 5 5 5 5 4 2 1 5 5 5
+5 5 5 6 5 5 5 5 5 5 5 5 4 5 5 5
+5 5 5 6 5 5 5 5 5 5 5 5 4 5 5 5
+5 5 5 9 8 6 5 5 5 5 4 8 7 5 5 5
+5 5 5 5 5 6 5 5 5 5 4 5 5 5 5 5
+5 5 5 5 5 6 5 5 5 5 4 5 5 5 5 5
+5 B 5 5 5 9 8 8 8 8 7 5 5 5 B 5
+5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
+    </script>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="cabinet" aria-label="Obliquon arcade game">
+        <div class="screen-bar">
+          <h1>OBLIQUON</h1>
+          <div class="hud" aria-live="polite">
+            <span>Score <strong id="score">00000</strong></span>
+            <span>Grade <strong id="level">1</strong></span>
+            <span>Balls <strong id="lives">3</strong></span>
+            <span class="timer">Time <strong id="timer">00:00</strong></span>
+            <button id="music-toggle" class="icon-button" type="button">Music On</button>
+          </div>
+        </div>
+
+        <canvas id="game" width="768" height="576" aria-label="Playable Obliquon game board"></canvas>
+
+        <div class="panel">
+          <p id="status">Roll over every blinking beacon. Avoid the star cutters.</p>
+          <div class="controls" aria-label="Controls">
+            <kbd>Arrow Keys</kbd>
+            <kbd>WASD</kbd>
+            <kbd>Space Boom</kbd>
+            <kbd>P</kbd>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <audio id="bgm" src="Myzolog.mp3" preload="auto" loop></audio>
+
+    <div id="stage-modal" class="modal-backdrop" aria-hidden="true">
+      <section class="modal" aria-label="Stage complete">
+        <h2>Stage Clear</h2>
+        <p id="stage-summary">You cleared the stage.</p>
+        <div class="stats">
+          <div><span>Time</span><strong id="modal-time">00:00</strong></div>
+          <div><span>Penalty</span><strong id="modal-penalty">00000</strong></div>
+          <div><span>Score</span><strong id="modal-score">00000</strong></div>
+        </div>
+        <div class="share-header">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M18 16a3 3 0 0 0-2.39 1.2l-6.52-3.26a3.41 3.41 0 0 0 0-1.88l6.52-3.26A3 3 0 1 0 15 7a3.41 3.41 0 0 0 .09.74L8.57 11A3 3 0 1 0 9 13c0-.25-.03-.5-.09-.74l6.52 3.26A3 3 0 1 0 18 16Z"/>
+          </svg>
+          <span>Share</span>
+        </div>
+        <div class="share-actions">
+          <a id="share-facebook" href="#" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 22v-8h2.7l.4-3h-3.1V9.1c0-.9.3-1.5 1.6-1.5H17V4.9c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4V11H8v3h2.8v8h2.7Z"/></svg>
+            <span>Facebook</span>
+          </a>
+          <a id="share-instagram" href="#" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Zm0 2.2A2.8 2.8 0 0 0 4.2 7v10A2.8 2.8 0 0 0 7 19.8h10a2.8 2.8 0 0 0 2.8-2.8V7A2.8 2.8 0 0 0 17 4.2H7Zm5 2.6A5.2 5.2 0 1 1 6.8 12 5.2 5.2 0 0 1 12 6.8Zm0 2.2A3 3 0 1 0 15 12a3 3 0 0 0-3-3Zm5.4-3.5a1.2 1.2 0 1 1-1.2 1.2 1.2 1.2 0 0 1 1.2-1.2Z"/></svg>
+            <span>Instagram</span>
+          </a>
+          <a id="share-reddit" href="#" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a2 2 0 0 0-3.3-1.5 8.6 8.6 0 0 0-5.1-1.7l1-4.5 3.1.7a1.8 1.8 0 1 0 .2-1.1l-3.6-.8a.6.6 0 0 0-.7.5l-1.1 5.1A8.5 8.5 0 0 0 6.4 10a2 2 0 1 0-1.1 3.7v.3c0 3 3 5.5 6.7 5.5s6.7-2.4 6.7-5.5v-.3a2 2 0 0 0 2.3-2Zm-11.4 3a1.2 1.2 0 1 1 1.1-1.1 1.1 1.1 0 0 1-1.1 1.1Zm5.8 2.3A4.4 4.4 0 0 1 12 18a4.4 4.4 0 0 1-3.4-1.2.5.5 0 0 1 .8-.7A3.5 3.5 0 0 0 12 17a3.5 3.5 0 0 0 2.6-.9.5.5 0 0 1 .8.7Zm-.1-2.3a1.2 1.2 0 1 1 1.1-1.1 1.1 1.1 0 0 1-1.1 1.1Z"/></svg>
+            <span>Reddit</span>
+          </a>
+          <a id="share-whatsapp" href="#" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.7 14.9L2 22l5.3-1.3A10 10 0 1 0 12 2Zm0 18.2a8.1 8.1 0 0 1-4.1-1.1l-.3-.2-3.1.8.8-3-.2-.4A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1-.9-.5c-.3-.1-.5-.2-.7.2l-.5.6c-.1.1-.3.1-.5 0a6.6 6.6 0 0 1-3.2-2.8c-.2-.3 0-.4.1-.6l.4-.5a.7.7 0 0 0 .1-.7l-.4-1c-.2-.5-.4-.4-.7-.4h-.6a1.2 1.2 0 0 0-.9.4A2.8 2.8 0 0 0 8 11a4.8 4.8 0 0 0 1 2.5 10.9 10.9 0 0 0 4.2 3.7 9.7 9.7 0 0 0 1.4.5 3.2 3.2 0 0 0 1.5.1 2.5 2.5 0 0 0 1.7-1.2 2.1 2.1 0 0 0 .1-1.2c-.1-.1-.3-.2-.6-.3Z"/></svg>
+            <span>WhatsApp</span>
+          </a>
+        </div>
+        <div class="modal-actions" style="margin-top: 14px;">
+          <button id="share-image" type="button">Share Image</button>
+          <button id="download-image" type="button">Download Image</button>
+          <button id="copy-image" type="button">Copy Image</button>
+          <button id="copy-share" type="button">Copy Text</button>
+          <button id="next-stage" class="primary" type="button">Next Stage [Enter]</button>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const canvas = document.querySelector("#game");
+      const ctx = canvas.getContext("2d");
+
+      const scoreEl = document.querySelector("#score");
+      const levelEl = document.querySelector("#level");
+      const livesEl = document.querySelector("#lives");
+      const timerEl = document.querySelector("#timer");
+      const statusEl = document.querySelector("#status");
+      const musicToggleEl = document.querySelector("#music-toggle");
+      const stageModalEl = document.querySelector("#stage-modal");
+      const stageSummaryEl = document.querySelector("#stage-summary");
+      const modalTimeEl = document.querySelector("#modal-time");
+      const modalPenaltyEl = document.querySelector("#modal-penalty");
+      const modalScoreEl = document.querySelector("#modal-score");
+      const nextStageBtn = document.querySelector("#next-stage");
+      const copyShareBtn = document.querySelector("#copy-share");
+      const shareImageBtn = document.querySelector("#share-image");
+      const downloadImageBtn = document.querySelector("#download-image");
+      const copyImageBtn = document.querySelector("#copy-image");
+      const shareFacebookEl = document.querySelector("#share-facebook");
+      const shareInstagramEl = document.querySelector("#share-instagram");
+      const shareRedditEl = document.querySelector("#share-reddit");
+      const shareWhatsappEl = document.querySelector("#share-whatsapp");
+      const bgmEl = document.querySelector("#bgm");
+
+      const W = canvas.width;
+      const H = canvas.height;
+      const TILE = 48;
+      const COLS = W / TILE;
+      const ROWS = H / TILE;
+      const BASE_SPEED_SCALE = 0.36;
+      const LEVEL_SPEED_GROWTH = 1.03;
+      const PLAYER_ACCEL = 0.112;
+      const PLAYER_MAX_SPEED = 5.8;
+      const PLAYER_RAMP_PULL = 0.136;
+      const PLAYER_COAST = 0.988;
+      const PLAYER_TURN_RESISTANCE = 0.72;
+      const ENEMY_ACCEL = 0.061;
+      const ENEMY_RAMP_PULL = 0.014;
+      const ENEMY_RESPAWN_MS = 5000;
+      const EXTRA_BALL_POINTS = 5000;
+      const STAGE_PENALTY_INTERVAL_MS = 10000;
+      const STAGE_PENALTY_POINTS = 50;
+      const LEVEL_TEXT_IDS = ["level01-data", "level02-data", "level03-data"];
+      const ENEMY_PLANS = [
+        ["type1", "type1"],
+        ["type1", "type1", "type2"],
+        ["type1", "type2", "type3", "type1"],
+        ["type1", "type2", "type3", "type2", "type1"],
+        ["type1", "type2", "type3", "type2", "type3", "type1"]
+      ];
+      const keys = new Set();
+
+      const state = {
+        score: 0,
+        grade: 1,
+        lives: 3,
+        paused: false,
+        gameOver: false,
+        levelWon: false,
+        loading: true,
+        exploding: false,
+        musicEnabled: true,
+        musicStarted: false,
+        extraBallThreshold: EXTRA_BALL_POINTS,
+        stageElapsedMs: 0,
+        stagePenaltySteps: 0,
+        clearModalOpen: false,
+        awaitingStart: true,
+        stageResult: null,
+        shake: 0,
+        flash: 0,
+        grid: [],
+        beacons: [],
+        enemies: [],
+        fragments: [],
+        player: makePlayer()
+      };
+
+      function makePlayer() {
+        return {
+          x: TILE * 1.5,
+          y: TILE * 1.5,
+          vx: 0,
+          vy: 0,
+          lastMoveX: 1,
+          lastMoveY: 0,
+          r: 13,
+          invincible: 0,
+          active: true
+        };
+      }
+
+      const enemyTypes = {
+        type1: { speed: 0.042, color: "#7cff5f", label: "tracker" },
+        type2: { speed: 0.075, color: "#ff9a54", label: "chaos" },
+        type3: { speed: 0, color: "#68d7ff", label: "orbiter" }
+      };
+
+      const terrainColors = {
+        south: "#d8efe4",
+        east: "#9fd7bf",
+        flat: "#5a9f82",
+        west: "#3f7162",
+        north: "#1f3833",
+        northeast: "#c5e5d6",
+        southeast: "#b6e0ca",
+        southwest: "#4e8772",
+        northwest: "#2b4a42"
+      };
+
+      const slopeAliases = {
+        N: "north",
+        NE: "northeast",
+        E: "east",
+        SE: "southeast",
+        S: "south",
+        SW: "southwest",
+        W: "west",
+        NW: "northwest"
+      };
+
+      const keypadSlopeAliases = {
+        "8": "north",
+        "2": "south",
+        "4": "west",
+        "6": "east",
+        "9": "northeast",
+        "3": "southeast",
+        "7": "northwest",
+        "1": "southwest"
+      };
+
+      const invertedDiagonalAliases = {
+        G: "northeast",
+        E: "southeast",
+        T: "northwest",
+        I: "southwest"
+      };
+
+      const slopeVectors = {
+        north: { x: 0, y: -1 },
+        northeast: { x: Math.SQRT1_2, y: -Math.SQRT1_2 },
+        east: { x: 1, y: 0 },
+        southeast: { x: Math.SQRT1_2, y: Math.SQRT1_2 },
+        south: { x: 0, y: 1 },
+        southwest: { x: -Math.SQRT1_2, y: Math.SQRT1_2 },
+        west: { x: -1, y: 0 },
+        northwest: { x: -Math.SQRT1_2, y: -Math.SQRT1_2 }
+      };
+
+      const loadedMaps = [];
+
+      bgmEl.volume = 0.5;
+
+      function updateMusicButton() {
+        musicToggleEl.textContent = state.musicEnabled ? "Music On" : "Music Off";
+      }
+
+      async function ensureMusicPlayback() {
+        if (!state.musicEnabled || state.musicStarted) return;
+        try {
+          await bgmEl.play();
+          state.musicStarted = true;
+        } catch (error) {
+          console.debug("Music playback blocked until user gesture is accepted.", error);
+        }
+      }
+
+      function toggleMusic() {
+        state.musicEnabled = !state.musicEnabled;
+        updateMusicButton();
+        if (!state.musicEnabled) {
+          bgmEl.pause();
+          return;
+        }
+        ensureMusicPlayback();
+      }
+
+      function speedScale() {
+        return BASE_SPEED_SCALE * Math.pow(LEVEL_SPEED_GROWTH, state.grade - 1);
+      }
+
+      function startLevel() {
+        const level = levelDataAt(state.grade);
+        state.grid = buildGrid(level);
+        state.beacons = placeBeacons(level, state.grade);
+        state.enemies = placeEnemies(level, state.grade);
+        state.fragments = [];
+        state.player = makePlayerFromLevel(level);
+        state.levelWon = false;
+        state.paused = false;
+        state.exploding = false;
+        state.stageElapsedMs = 0;
+        state.stagePenaltySteps = 0;
+        state.clearModalOpen = false;
+        state.stageResult = null;
+        state.loading = false;
+        closeStageModal();
+        statusEl.textContent = "Roll over every blinking beacon. Avoid the star cutters.";
+        updateHud();
+      }
+
+      function levelDataAt(grade) {
+        return loadedMaps[(grade - 1) % loadedMaps.length];
+      }
+
+      function buildGrid(level) {
+        const grid = level.grid.map((row) =>
+          row.map((tile) => ({
+            h: tile.h,
+            block: tile.block,
+            slope: tile.slope,
+            invertPaint: Boolean(tile.invertPaint)
+          }))
+        );
+        return grid;
+      }
+
+      function loadMaps() {
+        loadedMaps.length = 0;
+        for (const id of LEVEL_TEXT_IDS) {
+          const source = document.getElementById(id);
+          if (!source) {
+            throw new Error(`Missing embedded map: ${id}`);
+          }
+          loadedMaps.push(parseMap(source.textContent, id));
+        }
+      }
+
+      function parseMap(text, path) {
+        const level = {
+          grid: [],
+          player: null,
+          targets: [],
+          enemies: []
+        };
+
+        const rows = [];
+        for (const rawLine of text.split(/\r?\n/)) {
+          const line = rawLine.trim();
+          if (!line || line.startsWith(";") || line.startsWith("#")) continue;
+          if (line.startsWith("@")) {
+            parseDirective(line, path, level);
+            continue;
+          }
+          rows.push(tokenizeMapLine(line));
+        }
+
+        if (rows.length !== ROWS) {
+          throw new Error(`${path} must have exactly ${ROWS} map rows; got ${rows.length}.`);
+        }
+
+        level.grid = rows.map((tokens, y) => {
+          if (tokens.length !== COLS) {
+            throw new Error(`${path} row ${y + 1} must have exactly ${COLS} tiles; got ${tokens.length}.`);
+          }
+
+          return tokens.map((token, x) => {
+            if (token === "B" || token === "X") return { h: 0, block: true, slope: null };
+            if (token === "." || token === "5") return { h: 0, block: false, slope: null };
+            if (keypadSlopeAliases[token]) return { h: 0, block: false, slope: keypadSlopeAliases[token] };
+            if (invertedDiagonalAliases[token]) {
+              return { h: 0, block: false, slope: invertedDiagonalAliases[token], invertPaint: true };
+            }
+            if (/^[0-3]$/.test(token)) return { h: Number(token), block: false, slope: null };
+            const match = token.match(/^([1-3])([A-Z]{1,2})$/);
+            if (match) {
+              const direction = slopeAliases[match[2]];
+              if (direction) {
+                return { h: Number(match[1]), block: false, slope: direction };
+              }
+            }
+            throw new Error(`${path} row ${y + 1}, col ${x + 1}: invalid tile '${token}'.`);
+          });
+        });
+
+        validateLevelMetadata(level, path);
+        return level;
+      }
+
+      function parseDirective(line, path, level) {
+        const parts = line.split(/\s+/);
+        const cmd = parts[0].toLowerCase();
+        if (cmd === "@player") {
+          if (parts.length !== 3) throw new Error(`${path}: @player needs x y`);
+          level.player = parsePoint(parts[1], parts[2], path, "@player");
+          return;
+        }
+        if (cmd === "@target") {
+          if (parts.length !== 3) throw new Error(`${path}: @target needs x y`);
+          level.targets.push(parsePoint(parts[1], parts[2], path, "@target"));
+          return;
+        }
+        if (cmd === "@enemy") {
+          if (parts.length !== 4) throw new Error(`${path}: @enemy needs type x y`);
+          if (!enemyTypes[parts[1]]) throw new Error(`${path}: unknown enemy type '${parts[1]}'`);
+          level.enemies.push({ type: parts[1], ...parsePoint(parts[2], parts[3], path, "@enemy") });
+          return;
+        }
+        throw new Error(`${path}: unknown directive '${parts[0]}'`);
+      }
+
+      function parsePoint(rawX, rawY, path, label) {
+        const x = Number(rawX);
+        const y = Number(rawY);
+        if (!Number.isInteger(x) || !Number.isInteger(y)) {
+          throw new Error(`${path}: ${label} coordinates must be integers`);
+        }
+        if (x < 0 || x >= COLS || y < 0 || y >= ROWS) {
+          throw new Error(`${path}: ${label} coordinates out of bounds (${x}, ${y})`);
+        }
+        return { tx: x, ty: y };
+      }
+
+      function validateLevelMetadata(level, path) {
+        const grid = level.grid;
+        const isBlocked = (point) => grid[point.ty][point.tx].block;
+        if (level.player && isBlocked(level.player)) {
+          throw new Error(`${path}: @player cannot be on a blocker`);
+        }
+        for (const point of level.targets) {
+          if (isBlocked(point)) {
+            throw new Error(`${path}: @target cannot be on a blocker (${point.tx}, ${point.ty})`);
+          }
+        }
+        for (const enemy of level.enemies) {
+          if (isBlocked(enemy)) {
+            throw new Error(`${path}: @enemy cannot be on a blocker (${enemy.tx}, ${enemy.ty})`);
+          }
+        }
+      }
+
+      function tokenizeMapLine(line) {
+        if (!/\s/.test(line)) {
+          return [...line];
+        }
+
+        const parts = line.split(/\s+/).filter(Boolean);
+        const tokens = [];
+        for (const part of parts) {
+          if (/^[0-35BX.IETG]+$/.test(part)) {
+            tokens.push(...part);
+          } else {
+            tokens.push(part);
+          }
+        }
+        return tokens;
+      }
+
+      function makePlayerFromLevel(level) {
+        const player = makePlayer();
+        if (!level.player) return player;
+        player.x = level.player.tx * TILE + TILE / 2;
+        player.y = level.player.ty * TILE + TILE / 2;
+        return player;
+      }
+
+      function placeBeacons(level, grade) {
+        if (level.targets.length > 0) {
+          return level.targets.map((point) => ({
+            tx: point.tx,
+            ty: point.ty,
+            x: point.tx * TILE + TILE / 2,
+            y: point.ty * TILE + TILE / 2,
+            on: true
+          }));
+        }
+        const count = Math.min(18, 7 + grade * 2);
+        const beacons = [];
+        let guard = 0;
+        while (beacons.length < count && guard < 600) {
+          guard += 1;
+          const x = 2 + Math.floor(Math.random() * (COLS - 4));
+          const y = 2 + Math.floor(Math.random() * (ROWS - 4));
+          if (state.grid[y][x].block) continue;
+          if (beacons.some((b) => Math.hypot(b.tx - x, b.ty - y) < 3)) continue;
+          beacons.push({ tx: x, ty: y, x: x * TILE + TILE / 2, y: y * TILE + TILE / 2, on: true });
+        }
+        return beacons;
+      }
+
+      function placeEnemies(level, grade) {
+        if (level.enemies.length > 0) {
+          return level.enemies.map((entry) => makeEnemy(entry.type, entry.tx, entry.ty));
+        }
+        const plan = ENEMY_PLANS[Math.min(ENEMY_PLANS.length - 1, grade - 1)];
+        const enemies = [];
+        const spawns = [
+          { x: W - TILE * 1.5, y: H - TILE * 1.5 },
+          { x: W - TILE * 1.5, y: TILE * 1.5 },
+          { x: TILE * 1.5, y: H - TILE * 1.5 },
+          { x: W / 2, y: H - TILE * 1.5 },
+          { x: W / 2, y: TILE * 1.5 },
+          { x: W - TILE * 3, y: H / 2 }
+        ];
+        for (let i = 0; i < plan.length; i += 1) {
+          const spawn = findOpenSpawn(spawns[i % spawns.length]);
+          enemies.push(makeEnemy(plan[i], Math.floor(spawn.x / TILE), Math.floor(spawn.y / TILE), spawn.x, spawn.y));
+        }
+        return enemies;
+      }
+
+      function makeEnemy(kind, tx, ty, px = null, py = null) {
+        const spec = enemyTypes[kind];
+        const spawnX = px ?? tx * TILE + TILE / 2;
+        const spawnY = py ?? ty * TILE + TILE / 2;
+        return {
+          x: spawnX,
+          y: spawnY,
+          spawnX,
+          spawnY,
+          vx: 0,
+          vy: 0,
+          r: 14,
+          type: kind,
+          hue: spec.color,
+          spin: Math.random() * Math.PI * 2,
+          speed: spec.speed,
+          turnBias: Math.random() < 0.5 ? -1 : 1,
+          chaos: Math.random() * Math.PI * 2,
+          heading: Math.random() * Math.PI * 2,
+          headingTimer: 10 + Math.floor(Math.random() * 20),
+          stuckFrames: 0,
+          dead: false,
+          respawnMs: 0
+        };
+      }
+
+      function findOpenSpawn(point) {
+        const candidates = [];
+        for (let radius = 0; radius < 4; radius += 1) {
+          for (let dy = -radius; dy <= radius; dy += 1) {
+            for (let dx = -radius; dx <= radius; dx += 1) {
+              candidates.push({
+                x: point.x + dx * TILE,
+                y: point.y + dy * TILE
+              });
+            }
+          }
+        }
+
+        for (const candidate of candidates) {
+          const x = Math.max(TILE, Math.min(W - TILE, candidate.x));
+          const y = Math.max(TILE, Math.min(H - TILE, candidate.y));
+          if (!tileAt(x, y).block) {
+            return { x, y };
+          }
+        }
+        return point;
+      }
+
+      function tileAt(x, y) {
+        const tx = Math.max(0, Math.min(COLS - 1, Math.floor(x / TILE)));
+        const ty = Math.max(0, Math.min(ROWS - 1, Math.floor(y / TILE)));
+        return state.grid[ty][tx];
+      }
+
+      function heightAt(x, y) {
+        const tile = tileAt(x, y);
+        if (!tile.slope) return 0;
+
+        const local = localTilePosition(x, y);
+        if (!isPointOnSlopePaint(tile, local.u, local.v)) return 0;
+
+        const localX = local.u - 0.5;
+        const localY = local.v - 0.5;
+        const vector = slopeVectors[tile.slope];
+        const progress = Math.max(0, Math.min(1, 0.5 + localX * vector.x + localY * vector.y));
+        return progress;
+      }
+
+      function localTilePosition(x, y) {
+        const tx = Math.max(0, Math.min(COLS - 1, Math.floor(x / TILE)));
+        const ty = Math.max(0, Math.min(ROWS - 1, Math.floor(y / TILE)));
+        return {
+          tx,
+          ty,
+          u: (x - tx * TILE) / TILE,
+          v: (y - ty * TILE) / TILE
+        };
+      }
+
+      function isDiagonalSlope(kind) {
+        return kind === "northeast" || kind === "southeast" || kind === "northwest" || kind === "southwest";
+      }
+
+      function isPointOnSlopePaint(tile, u, v) {
+        if (!tile.slope) return false;
+        if (!isDiagonalSlope(tile.slope)) return true;
+        if (tile.slope === "northeast") return tile.invertPaint ? u <= v : u >= v;
+        if (tile.slope === "southeast") return tile.invertPaint ? u + v <= 1 : u + v >= 1;
+        if (tile.slope === "northwest") return tile.invertPaint ? u + v >= 1 : u + v <= 1;
+        return tile.invertPaint ? u >= v : u <= v;
+      }
+
+      function gridHeight(x, y) {
+        const tx = Math.max(0, Math.min(COLS - 1, x));
+        const ty = Math.max(0, Math.min(ROWS - 1, y));
+        const tile = state.grid[ty][tx];
+        if (!tile.slope) return 0;
+        return 0.5;
+      }
+
+      function slopeKindAt(tx, ty) {
+        const tile = state.grid[ty][tx];
+        if (tile.slope) return tile.slope;
+        return "flat";
+      }
+
+      function diagonalSplitAt(tx, ty) {
+        const north = ty > 0 ? slopeKindAt(tx, ty - 1) : "flat";
+        const south = ty < ROWS - 1 ? slopeKindAt(tx, ty + 1) : "flat";
+        const west = tx > 0 ? slopeKindAt(tx - 1, ty) : "flat";
+        const east = tx < COLS - 1 ? slopeKindAt(tx + 1, ty) : "flat";
+
+        if (north === "east" && west === "south") return { a: "east", b: "south", axis: "nw-se" };
+        if (north === "west" && east === "south") return { a: "west", b: "south", axis: "ne-sw" };
+        if (south === "east" && west === "north") return { a: "north", b: "east", axis: "ne-sw" };
+        if (south === "west" && east === "north") return { a: "north", b: "west", axis: "nw-se" };
+        return null;
+      }
+
+      function drawSlopeTile(px, py, split, kind, invertPaint = false) {
+        const isDiagonal =
+          kind === "northeast" ||
+          kind === "southeast" ||
+          kind === "northwest" ||
+          kind === "southwest";
+
+        if (isDiagonal) {
+          ctx.fillStyle = terrainColors.flat;
+          ctx.fillRect(px, py, TILE, TILE);
+
+          ctx.fillStyle = terrainColors[kind];
+          ctx.beginPath();
+          if (kind === "northeast") {
+            if (invertPaint) {
+              ctx.moveTo(px, py);
+              ctx.lineTo(px + TILE, py + TILE);
+              ctx.lineTo(px, py + TILE);
+            } else {
+              ctx.moveTo(px + TILE, py);
+              ctx.lineTo(px + TILE, py + TILE);
+              ctx.lineTo(px, py);
+            }
+          } else if (kind === "southeast") {
+            if (invertPaint) {
+              ctx.moveTo(px, py);
+              ctx.lineTo(px + TILE, py);
+              ctx.lineTo(px, py + TILE);
+            } else {
+              ctx.moveTo(px + TILE, py + TILE);
+              ctx.lineTo(px, py + TILE);
+              ctx.lineTo(px + TILE, py);
+            }
+          } else if (kind === "northwest") {
+            if (invertPaint) {
+              ctx.moveTo(px + TILE, py);
+              ctx.lineTo(px + TILE, py + TILE);
+              ctx.lineTo(px, py + TILE);
+            } else {
+              ctx.moveTo(px, py);
+              ctx.lineTo(px + TILE, py);
+              ctx.lineTo(px, py + TILE);
+            }
+          } else {
+            if (invertPaint) {
+              ctx.moveTo(px, py);
+              ctx.lineTo(px + TILE, py);
+              ctx.lineTo(px + TILE, py + TILE);
+            } else {
+              ctx.moveTo(px, py + TILE);
+              ctx.lineTo(px, py);
+              ctx.lineTo(px + TILE, py + TILE);
+            }
+          }
+          ctx.closePath();
+          ctx.fill();
+          return;
+        }
+
+        if (!split) {
+          ctx.fillStyle = terrainColors[kind];
+          ctx.fillRect(px, py, TILE, TILE);
+          return;
+        }
+
+        if (split.axis === "nw-se") {
+          ctx.fillStyle = terrainColors[split.a];
+          ctx.beginPath();
+          ctx.moveTo(px, py);
+          ctx.lineTo(px + TILE, py);
+          ctx.lineTo(px, py + TILE);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = terrainColors[split.b];
+          ctx.beginPath();
+          ctx.moveTo(px + TILE, py);
+          ctx.lineTo(px + TILE, py + TILE);
+          ctx.lineTo(px, py + TILE);
+          ctx.closePath();
+          ctx.fill();
+        } else {
+          ctx.fillStyle = terrainColors[split.a];
+          ctx.beginPath();
+          ctx.moveTo(px, py);
+          ctx.lineTo(px + TILE, py);
+          ctx.lineTo(px + TILE, py + TILE);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = terrainColors[split.b];
+          ctx.beginPath();
+          ctx.moveTo(px, py);
+          ctx.lineTo(px + TILE, py + TILE);
+          ctx.lineTo(px, py + TILE);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+
+      function wallHit(entity) {
+        let bounced = false;
+        if (entity.x < entity.r) {
+          entity.x = entity.r;
+          entity.vx = Math.abs(entity.vx) * 0.72;
+          bounced = true;
+        }
+        if (entity.x > W - entity.r) {
+          entity.x = W - entity.r;
+          entity.vx = -Math.abs(entity.vx) * 0.72;
+          bounced = true;
+        }
+        if (entity.y < entity.r) {
+          entity.y = entity.r;
+          entity.vy = Math.abs(entity.vy) * 0.72;
+          bounced = true;
+        }
+        if (entity.y > H - entity.r) {
+          entity.y = H - entity.r;
+          entity.vy = -Math.abs(entity.vy) * 0.72;
+          bounced = true;
+        }
+        return bounced;
+      }
+
+      function blockCollide(entity, oldX, oldY) {
+        const tile = tileAt(entity.x, entity.y);
+        if (!tile.block) return;
+        entity.x = oldX;
+        entity.y = oldY;
+        entity.vx *= -0.42;
+        entity.vy *= -0.42;
+        if ("stuckFrames" in entity) {
+          entity.stuckFrames += 2;
+        }
+      }
+
+      function slopeForce(entity, amount) {
+        const tile = tileAt(entity.x, entity.y);
+        const local = localTilePosition(entity.x, entity.y);
+        if (tile.slope && isPointOnSlopePaint(tile, local.u, local.v)) {
+          const vector = slopeVectors[tile.slope];
+          entity.vx -= vector.x * amount;
+          entity.vy -= vector.y * amount;
+        }
+      }
+
+      function triggerSelfDestruct() {
+        if (state.exploding || state.gameOver || state.levelWon || state.loading) return;
+        const p = state.player;
+        if (!p.active) return;
+        state.exploding = true;
+        p.active = false;
+        state.shake = 18;
+        statusEl.textContent = "Self-destruction triggered.";
+        state.fragments = [];
+        const count = 20;
+        for (let i = 0; i < count; i += 1) {
+          const angle = (Math.PI * 2 * i) / count;
+          const speed = 3.1 + Math.random() * 2.4;
+          state.fragments.push({
+            x: p.x,
+            y: p.y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            r: 4 + Math.random() * 2
+          });
+        }
+      }
+
+      function resolveExplosion() {
+        state.exploding = false;
+        state.fragments = [];
+        loseLife();
+      }
+
+      function updateFragments() {
+        if (!state.exploding) return;
+        const next = [];
+        for (const fragment of state.fragments) {
+          fragment.x += fragment.vx;
+          fragment.y += fragment.vy;
+          fragment.vx *= 0.995;
+          fragment.vy *= 0.995;
+
+          if (
+            fragment.x < -48 ||
+            fragment.x > W + 48 ||
+            fragment.y < -48 ||
+            fragment.y > H + 48
+          ) {
+            continue;
+          }
+
+          for (const enemy of state.enemies) {
+            if (enemy.dead) continue;
+            if (Math.hypot(fragment.x - enemy.x, fragment.y - enemy.y) < enemy.r + fragment.r + 2) {
+              defeatEnemyTemporarily(enemy);
+              state.score += 250;
+              awardExtraBalls();
+              state.flash = 5;
+            }
+          }
+
+          next.push(fragment);
+        }
+
+        state.fragments = next;
+        if (state.fragments.length === 0) {
+          resolveExplosion();
+        }
+      }
+
+      function defeatEnemyTemporarily(enemy) {
+        enemy.dead = true;
+        enemy.respawnMs = ENEMY_RESPAWN_MS;
+        enemy.vx = 0;
+        enemy.vy = 0;
+        enemy.stuckFrames = 0;
+      }
+
+      function updateEnemyRespawns(deltaMs) {
+        for (const enemy of state.enemies) {
+          if (!enemy.dead) continue;
+          enemy.respawnMs -= deltaMs;
+          if (enemy.respawnMs > 0) continue;
+          enemy.dead = false;
+          enemy.respawnMs = 0;
+          enemy.x = enemy.spawnX;
+          enemy.y = enemy.spawnY;
+          enemy.vx = 0;
+          enemy.vy = 0;
+          enemy.spin = Math.random() * Math.PI * 2;
+          enemy.chaos = Math.random() * Math.PI * 2;
+          enemy.heading = Math.random() * Math.PI * 2;
+          enemy.headingTimer = 10 + Math.floor(Math.random() * 20);
+          enemy.stuckFrames = 0;
+        }
+      }
+
+      function updatePlayer() {
+        if (!state.player.active) return;
+        const p = state.player;
+        const oldX = p.x;
+        const oldY = p.y;
+        let ax = 0;
+        let ay = 0;
+
+        if (keys.has("arrowleft") || keys.has("a")) ax -= PLAYER_ACCEL;
+        if (keys.has("arrowright") || keys.has("d")) ax += PLAYER_ACCEL;
+        if (keys.has("arrowup") || keys.has("w")) ay -= PLAYER_ACCEL;
+        if (keys.has("arrowdown") || keys.has("s")) ay += PLAYER_ACCEL;
+
+        const scale = speedScale();
+        ax *= scale;
+        ay *= scale;
+        if (ax !== 0 && Math.sign(ax) !== Math.sign(p.vx) && Math.abs(p.vx) > 0.12) ax *= PLAYER_TURN_RESISTANCE;
+        if (ay !== 0 && Math.sign(ay) !== Math.sign(p.vy) && Math.abs(p.vy) > 0.12) ay *= PLAYER_TURN_RESISTANCE;
+        slopeForce(p, PLAYER_RAMP_PULL * scale);
+        p.vx = (p.vx + ax) * PLAYER_COAST;
+        p.vy = (p.vy + ay) * PLAYER_COAST;
+        const max = PLAYER_MAX_SPEED * scale;
+        const mag = Math.hypot(p.vx, p.vy);
+        if (mag > max) {
+          p.vx = (p.vx / mag) * max;
+          p.vy = (p.vy / mag) * max;
+        }
+        p.x += p.vx;
+        p.y += p.vy;
+        if (Math.hypot(p.vx, p.vy) > 0.08) {
+          const motion = Math.hypot(p.vx, p.vy);
+          p.lastMoveX = p.vx / motion;
+          p.lastMoveY = p.vy / motion;
+        }
+        wallHit(p);
+        blockCollide(p, oldX, oldY);
+        p.invincible = Math.max(0, p.invincible - 1);
+      }
+
+      function updateEnemies() {
+        const p = state.player;
+        const scale = speedScale();
+        for (const e of state.enemies) {
+          if (e.dead) continue;
+          const oldX = e.x;
+          const oldY = e.y;
+          const dx = p.x - e.x;
+          const dy = p.y - e.y;
+          const dist = Math.max(1, Math.hypot(dx, dy));
+          let intentX = 0;
+          let intentY = 0;
+          if (e.type === "type3") {
+            e.vx = -p.vy * e.turnBias;
+            e.vy = p.vx * e.turnBias;
+          } else {
+            slopeForce(e, ENEMY_RAMP_PULL * scale);
+          }
+          if (e.type === "type1") {
+            intentX = dx / dist;
+            intentY = dy / dist;
+            e.vx = (e.vx + intentX * e.speed * scale) * 0.99;
+            e.vy = (e.vy + intentY * e.speed * scale) * 0.99;
+          } else if (e.type === "type2") {
+            e.headingTimer -= 1;
+            if (e.headingTimer <= 0) {
+              e.heading += (Math.random() - 0.5) * Math.PI * 1.45;
+              e.headingTimer = 8 + Math.floor(Math.random() * 18);
+            }
+            e.chaos += 0.22 + Math.random() * 0.18;
+            intentX = Math.cos(e.heading + Math.sin(e.chaos) * 0.55);
+            intentY = Math.sin(e.heading + Math.cos(e.chaos * 1.17) * 0.55);
+            e.vx = (e.vx + intentX * e.speed * scale * 1.6) * 0.992;
+            e.vy = (e.vy + intentY * e.speed * scale * 1.6) * 0.992;
+          }
+          e.x += e.vx;
+          e.y += e.vy;
+          if (e.type !== "type3") {
+            const motion = Math.hypot(e.vx, e.vy);
+            if (motion < 0.14) {
+              e.stuckFrames += 1;
+            } else {
+              e.stuckFrames = 0;
+            }
+
+            if (e.stuckFrames > 18) {
+              if (e.type === "type1") {
+                intentX = dx / dist;
+                intentY = dy / dist;
+              } else {
+                e.heading += Math.PI * (0.75 + Math.random() * 0.5);
+                intentX = Math.cos(e.heading);
+                intentY = Math.sin(e.heading);
+              }
+              const boost = e.type === "type2" ? 2.6 : 2.0;
+              e.vx = intentX * boost * scale;
+              e.vy = intentY * boost * scale;
+              e.stuckFrames = 0;
+            } else if (motion < 0.4) {
+              const minSpeed = e.type === "type2" ? 0.65 * scale : 0.5 * scale;
+              if (Math.abs(intentX) > 0.001 || Math.abs(intentY) > 0.001) {
+                e.vx += intentX * minSpeed;
+                e.vy += intentY * minSpeed;
+              }
+            }
+          }
+          e.spin += 0.12 + Math.hypot(e.vx, e.vy) * 0.03;
+          if (wallHit(e)) e.spin += 0.7;
+          blockCollide(e, oldX, oldY);
+          if (p.active && p.invincible <= 0 && Math.hypot(p.x - e.x, p.y - e.y) < p.r + e.r - 3) {
+            loseLife();
+            break;
+          }
+        }
+      }
+
+      function collectBeacons() {
+        let collected = false;
+        for (const b of state.beacons) {
+          if (!b.on) continue;
+          if (Math.hypot(state.player.x - b.x, state.player.y - b.y) < state.player.r + 12) {
+            b.on = false;
+            state.score += 100 + state.grade * 10;
+            awardExtraBalls();
+            state.flash = 8;
+            collected = true;
+          }
+        }
+        if (collected) updateHud();
+        if (state.beacons.every((b) => !b.on) && !state.levelWon) {
+          state.levelWon = true;
+          state.score += 1000 + state.grade * 250;
+          awardExtraBalls();
+          const result = buildStageResult();
+          state.stageResult = result;
+          statusEl.textContent = "Grade clear.";
+          updateHud();
+          openStageModal(result);
+        }
+      }
+
+      function loseLife() {
+        state.lives -= 1;
+        state.shake = 16;
+        updateHud();
+        if (state.lives <= 0) {
+          state.gameOver = true;
+          statusEl.textContent = "Game over. Press Space to roll again.";
+        } else {
+          statusEl.textContent = "Watch the star cutters. Keep rolling.";
+          state.player = makePlayerFromLevel(levelDataAt(state.grade));
+          state.player.invincible = 110;
+          state.exploding = false;
+          state.fragments = [];
+        }
+      }
+
+      function updateHud() {
+        scoreEl.textContent = String(state.score).padStart(5, "0");
+        levelEl.textContent = String(state.grade);
+        livesEl.textContent = String(state.lives);
+        timerEl.textContent = formatTime(state.stageElapsedMs);
+      }
+
+      function update(deltaMs) {
+        if (state.loading || state.paused || state.gameOver || state.clearModalOpen || state.awaitingStart) return;
+        state.stageElapsedMs += deltaMs;
+        applyStagePenalty();
+        if (state.levelWon) return;
+        updateEnemyRespawns(deltaMs);
+        updatePlayer();
+        updateEnemies();
+        updateFragments();
+        collectBeacons();
+        state.flash = Math.max(0, state.flash - 1);
+        state.shake = Math.max(0, state.shake - 1);
+        updateHud();
+      }
+
+      function applyStagePenalty() {
+        const steps = Math.floor(state.stageElapsedMs / STAGE_PENALTY_INTERVAL_MS);
+        while (state.stagePenaltySteps < steps) {
+          state.score -= STAGE_PENALTY_POINTS;
+          state.stagePenaltySteps += 1;
+          awardExtraBalls();
+        }
+      }
+
+      function awardExtraBalls() {
+        while (state.score >= state.extraBallThreshold) {
+          state.lives += 1;
+          state.extraBallThreshold += EXTRA_BALL_POINTS;
+          statusEl.textContent = "Bonus ball awarded.";
+          updateHud();
+        }
+      }
+
+      function buildStageResult() {
+        const penalty = state.stagePenaltySteps * STAGE_PENALTY_POINTS;
+        return {
+          grade: state.grade,
+          timeMs: state.stageElapsedMs,
+          penalty,
+          score: state.score
+        };
+      }
+
+      function formatTime(ms) {
+        const totalSeconds = Math.floor(ms / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      }
+
+      function drawGrid() {
+        ctx.fillStyle = "#050708";
+        ctx.fillRect(0, 0, W, H);
+
+        for (let y = 0; y < ROWS; y += 1) {
+          for (let x = 0; x < COLS; x += 1) {
+            const tile = state.grid[y][x];
+            const px = x * TILE;
+            const py = y * TILE;
+            if (tile.block) {
+              ctx.fillStyle = "#111";
+              ctx.fillRect(px, py, TILE, TILE);
+            } else {
+              const kind = slopeKindAt(x, y);
+              const split = kind === "flat" ? diagonalSplitAt(x, y) : null;
+              drawSlopeTile(px, py, split, kind, Boolean(tile.invertPaint));
+            }
+
+            if (tile.slope && !tile.block && !["northeast", "southeast", "northwest", "southwest"].includes(tile.slope)) {
+              ctx.fillStyle = "rgba(255,255,255,.08)";
+              ctx.fillRect(px + 4, py + 4, TILE - 8, 3);
+              ctx.fillStyle = "rgba(0,0,0,.20)";
+              ctx.fillRect(px + 4, py + TILE - 7, TILE - 8, 3);
+            }
+
+            if (tile.block) {
+              ctx.fillStyle = "#56636b";
+              ctx.fillRect(px + 8, py + 8, TILE - 16, TILE - 16);
+              ctx.fillStyle = "#20272d";
+              ctx.fillRect(px + 14, py + 14, TILE - 28, TILE - 28);
+            }
+          }
+        }
+      }
+
+      function drawBeacons(time) {
+        for (const b of state.beacons) {
+          if (!b.on) {
+            ctx.fillStyle = "#161b1d";
+            ctx.fillRect(b.x - 8, b.y - 8, 16, 16);
+            continue;
+          }
+          const pulse = (Math.sin(time / 180 + b.tx * 0.7 + b.ty * 0.35) + 1) / 2;
+          const radius = 8 + pulse * 4;
+          const red = Math.round(140 + pulse * 115);
+          const green = Math.round(18 + pulse * 34);
+          const blue = Math.round(30 + pulse * 42);
+          ctx.fillStyle = `rgb(${red}, ${green}, ${blue})`;
+          ctx.beginPath();
+          ctx.arc(b.x, b.y, radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = `rgba(255, 220, 224, ${0.45 + pulse * 0.45})`;
+          ctx.fillRect(b.x - 3, b.y - 3, 6, 6);
+        }
+      }
+
+      function drawPlayer(time) {
+        const p = state.player;
+        if (!p.active) return;
+        if (p.invincible > 0 && Math.floor(time / 80) % 2 === 0) return;
+        const shineX = -p.vx * 0.8 - 4;
+        const shineY = -p.vy * 0.8 - 5;
+
+        ctx.fillStyle = "rgba(0,0,0,.35)";
+        ctx.beginPath();
+        ctx.ellipse(p.x + 4, p.y + 11, 15, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        const grad = ctx.createRadialGradient(p.x + shineX, p.y + shineY, 2, p.x, p.y, p.r + 3);
+        grad.addColorStop(0, "#f6fbff");
+        grad.addColorStop(0.38, "#7fd7ff");
+        grad.addColorStop(1, "#1e5cc9");
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#dff7ff";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      function drawStar(enemy) {
+        if (enemy.dead) return;
+        ctx.save();
+        ctx.translate(enemy.x, enemy.y);
+        ctx.rotate(enemy.spin);
+        ctx.fillStyle = "rgba(0,0,0,.35)";
+        ctx.beginPath();
+        ctx.ellipse(4, 12, 16, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        for (let i = 0; i < 10; i += 1) {
+          const r = i % 2 === 0 ? enemy.r + 6 : enemy.r * 0.55;
+          const a = (Math.PI * 2 * i) / 10;
+          const x = Math.cos(a) * r;
+          const y = Math.sin(a) * r;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = enemy.hue;
+        ctx.fill();
+        ctx.strokeStyle = enemy.type === "type2" ? "#5e2500" : enemy.type === "type3" ? "#0b4162" : "#163d1d";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.fillStyle = enemy.type === "type2" ? "#ffe4c8" : enemy.type === "type3" ? "#d1f4ff" : "#d7ffd0";
+        ctx.fillRect(-4, -4, 8, 8);
+        ctx.restore();
+      }
+
+      function drawFragments() {
+        for (const fragment of state.fragments) {
+          ctx.fillStyle = "rgba(255, 184, 74, 0.8)";
+          ctx.beginPath();
+          ctx.arc(fragment.x, fragment.y, fragment.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function drawOverlay() {
+        if (state.loading) {
+          ctx.fillStyle = "rgba(0, 0, 0, .72)";
+          ctx.fillRect(0, 0, W, H);
+          ctx.fillStyle = "#f4d35e";
+          ctx.font = "700 34px Courier New";
+          ctx.textAlign = "center";
+          ctx.fillText("LOADING MAPS", W / 2, H / 2 - 8);
+          return;
+        }
+
+        if (state.awaitingStart) {
+          const blink = 0.5 + 0.5 * Math.sin(performance.now() / 260);
+          const panel = ctx.createLinearGradient(0, 0, W, H);
+          panel.addColorStop(0, "rgba(4, 8, 10, 0.96)");
+          panel.addColorStop(1, "rgba(7, 13, 16, 0.92)");
+          ctx.fillStyle = panel;
+          ctx.fillRect(0, 0, W, H);
+
+          ctx.strokeStyle = "rgba(244, 211, 94, 0.18)";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(56, 56, W - 112, H - 112);
+
+          ctx.fillStyle = "#f4d35e";
+          ctx.textAlign = "center";
+          ctx.font = "700 62px Courier New";
+          ctx.fillText("OBLIQUON", W / 2, H / 2 - 72);
+
+          ctx.fillStyle = "#dce6eb";
+          ctx.font = "700 19px Courier New";
+          ctx.fillText("ROLL THE SPHERE. READ THE SLOPES. SURVIVE THE STARS.", W / 2, H / 2 - 24);
+
+          ctx.fillStyle = `rgba(104, 215, 255, ${0.35 + blink * 0.65})`;
+          ctx.font = "700 28px Courier New";
+          ctx.fillText("PRESS SPACE TO START", W / 2, H / 2 + 52);
+
+          ctx.fillStyle = "#9cb0b8";
+          ctx.font = "700 16px Courier New";
+          ctx.fillText("ARROWS OR WASD TO ROLL   |   SPACE TO SELF-DESTRUCT", W / 2, H / 2 + 106);
+          return;
+        }
+
+        if (state.flash > 0) {
+          ctx.fillStyle = `rgba(255, 255, 255, ${state.flash / 42})`;
+          ctx.fillRect(0, 0, W, H);
+        }
+
+        if (state.paused || state.gameOver) {
+          ctx.fillStyle = "rgba(0, 0, 0, .66)";
+          ctx.fillRect(0, 0, W, H);
+          ctx.fillStyle = "#f4d35e";
+          ctx.font = "700 42px Courier New";
+          ctx.textAlign = "center";
+          ctx.fillText(state.gameOver ? "GAME OVER" : "PAUSED", W / 2, H / 2 - 12);
+          ctx.fillStyle = "#f4f7fb";
+          ctx.font = "700 18px Courier New";
+          ctx.fillText(state.gameOver ? "PRESS SPACE" : "PRESS P", W / 2, H / 2 + 28);
+        }
+      }
+
+      function draw(time) {
+        ctx.save();
+        if (state.shake > 0) {
+          ctx.translate((Math.random() - 0.5) * state.shake, (Math.random() - 0.5) * state.shake);
+        }
+        drawGrid();
+        drawBeacons(time);
+        for (const e of state.enemies) drawStar(e);
+        drawFragments();
+        drawPlayer(time);
+        ctx.restore();
+        drawOverlay();
+      }
+
+      function stageShareText(result) {
+        return `I cleared Grade ${result.grade} in ${formatTime(result.timeMs)} on Obliquon with score ${result.score}.`;
+      }
+
+      function buildStageCardCanvas(result) {
+        const card = document.createElement("canvas");
+        card.width = 1200;
+        card.height = 630;
+        const c = card.getContext("2d");
+        const text = stageShareText(result);
+
+        c.fillStyle = "#0b0f12";
+        c.fillRect(0, 0, card.width, card.height);
+
+        const bg = c.createLinearGradient(0, 0, card.width, card.height);
+        bg.addColorStop(0, "#152028");
+        bg.addColorStop(1, "#0d1419");
+        c.fillStyle = bg;
+        c.fillRect(28, 28, card.width - 56, card.height - 56);
+
+        c.strokeStyle = "#23303a";
+        c.lineWidth = 4;
+        c.strokeRect(28, 28, card.width - 56, card.height - 56);
+
+        c.fillStyle = "#f4d35e";
+        c.font = "700 58px Courier New";
+        c.fillText("OBLIQUON", 84, 118);
+
+        c.fillStyle = "#dce6eb";
+        c.font = "700 42px Courier New";
+        c.fillText(`GRADE ${result.grade} CLEAR`, 84, 210);
+
+        c.fillStyle = "#10161c";
+        c.fillRect(84, 262, 480, 210);
+        c.fillRect(612, 262, 504, 210);
+
+        c.strokeStyle = "#31404b";
+        c.lineWidth = 2;
+        c.strokeRect(84, 262, 480, 210);
+        c.strokeRect(612, 262, 504, 210);
+
+        c.fillStyle = "#99b2b8";
+        c.font = "700 24px Courier New";
+        c.fillText("TIME", 122, 324);
+        c.fillText("PENALTY", 122, 398);
+        c.fillText("SCORE", 122, 472);
+
+        c.fillStyle = "#f4f7fb";
+        c.font = "700 34px Courier New";
+        c.fillText(formatTime(result.timeMs), 302, 324);
+        c.fillText(String(result.penalty).padStart(5, "0"), 302, 398);
+        c.fillText(String(result.score).padStart(5, "0"), 302, 472);
+
+        c.fillStyle = "#7cff5f";
+        c.font = "700 24px Courier New";
+        wrapCanvasText(c, text, 650, 324, 420, 38);
+
+        c.fillStyle = "#68d7ff";
+        c.font = "700 22px Courier New";
+        c.fillText("play it. time it. survive it.", 84, 552);
+
+        return card;
+      }
+
+      function wrapCanvasText(ctx2d, text, x, y, maxWidth, lineHeight) {
+        const words = text.split(/\s+/);
+        let line = "";
+        let yy = y;
+        for (const word of words) {
+          const test = line ? `${line} ${word}` : word;
+          if (ctx2d.measureText(test).width > maxWidth && line) {
+            ctx2d.fillText(line, x, yy);
+            line = word;
+            yy += lineHeight;
+          } else {
+            line = test;
+          }
+        }
+        if (line) ctx2d.fillText(line, x, yy);
+      }
+
+      function canvasToBlob(canvasEl) {
+        return new Promise((resolve, reject) => {
+          canvasEl.toBlob((blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error("Could not create image blob."));
+          }, "image/png");
+        });
+      }
+
+      async function downloadStageImage() {
+        if (!state.stageResult) return;
+        const canvasEl = buildStageCardCanvas(state.stageResult);
+        const blob = await canvasToBlob(canvasEl);
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `obliquon-grade-${state.stageResult.grade}.png`;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+
+      async function copyStageImage() {
+        if (!state.stageResult) return;
+        if (!navigator.clipboard || typeof navigator.clipboard.write !== "function" || typeof ClipboardItem === "undefined") {
+          throw new Error("Image copy is not supported in this browser.");
+        }
+        const canvasEl = buildStageCardCanvas(state.stageResult);
+        const blob = await canvasToBlob(canvasEl);
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "image/png": blob
+          })
+        ]);
+      }
+
+      async function shareStageImage() {
+        if (!state.stageResult) return;
+        const canvasEl = buildStageCardCanvas(state.stageResult);
+        const blob = await canvasToBlob(canvasEl);
+        const file = new File([blob], `obliquon-grade-${state.stageResult.grade}.png`, { type: "image/png" });
+        const text = stageShareText(state.stageResult);
+
+        if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+          await navigator.share({
+            title: "Obliquon Stage Clear",
+            text,
+            files: [file]
+          });
+          return;
+        }
+
+        await downloadStageImage();
+      }
+
+      function openStageModal(result) {
+        state.clearModalOpen = true;
+        stageSummaryEl.textContent = `Grade ${result.grade} cleared in ${formatTime(result.timeMs)}.`;
+        modalTimeEl.textContent = formatTime(result.timeMs);
+        modalPenaltyEl.textContent = String(result.penalty).padStart(5, "0");
+        modalScoreEl.textContent = String(result.score).padStart(5, "0");
+        const text = stageShareText(result);
+        const url = window.location.href || "https://example.com";
+        const encodedText = encodeURIComponent(text);
+        const encodedUrl = encodeURIComponent(url);
+        const canSharePublicUrl = /^https?:/i.test(url) && !/^file:/i.test(url);
+        if (canSharePublicUrl) {
+          shareFacebookEl.href = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedText}`;
+          shareFacebookEl.removeAttribute("aria-disabled");
+          shareFacebookEl.title = "";
+        } else {
+          shareFacebookEl.href = "#";
+          shareFacebookEl.setAttribute("aria-disabled", "true");
+          shareFacebookEl.title = "Facebook sharing needs a public https URL.";
+        }
+        shareRedditEl.href = `https://www.reddit.com/submit?url=${encodedUrl}&title=${encodedText}`;
+        shareWhatsappEl.href = `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`;
+        shareInstagramEl.href = "https://www.instagram.com/";
+        shareInstagramEl.dataset.shareText = text;
+        stageModalEl.classList.add("is-open");
+        stageModalEl.setAttribute("aria-hidden", "false");
+      }
+
+      function closeStageModal() {
+        stageModalEl.classList.remove("is-open");
+        stageModalEl.setAttribute("aria-hidden", "true");
+      }
+
+      function continueToNextStage() {
+        state.clearModalOpen = false;
+        state.levelWon = false;
+        state.grade += 1;
+        startLevel();
+      }
+
+      function loop(time) {
+        const deltaMs = Math.min(100, Math.max(0, time - (loop.lastTime || time)));
+        loop.lastTime = time;
+        update(deltaMs);
+        draw(time);
+        requestAnimationFrame(loop);
+      }
+
+      function restartGame() {
+        state.score = 0;
+        state.grade = 1;
+        state.lives = 3;
+        state.gameOver = false;
+        state.loading = true;
+        startLevel();
+        state.awaitingStart = true;
+        statusEl.textContent = "Press Space to start.";
+      }
+
+      function handleLoadError(error) {
+        state.loading = true;
+        state.paused = true;
+        state.gameOver = true;
+        const message = String(error && error.message ? error.message : error);
+        statusEl.textContent = `Map load error: ${message}`;
+        console.error(error);
+      }
+
+      function initGame() {
+        try {
+          loadMaps();
+          startLevel();
+          state.awaitingStart = true;
+          statusEl.textContent = "Press Space to start.";
+          updateMusicButton();
+        } catch (error) {
+          handleLoadError(error);
+        }
+      }
+
+      window.addEventListener("keydown", (event) => {
+        ensureMusicPlayback();
+        const key = event.key.toLowerCase();
+        if (state.clearModalOpen && key === "enter") {
+          event.preventDefault();
+          continueToNextStage();
+          return;
+        }
+        if (state.awaitingStart && key === " ") {
+          event.preventDefault();
+          state.awaitingStart = false;
+          statusEl.textContent = "Roll over every blinking beacon. Avoid the star cutters.";
+          return;
+        }
+        if (key === "l") {
+          event.preventDefault();
+          skipToNextLevel();
+          return;
+        }
+        if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(key)) {
+          event.preventDefault();
+        }
+        if (key === "p") {
+          state.paused = !state.paused;
+          statusEl.textContent = state.paused ? "Paused." : "Roll over every blinking beacon. Avoid the star cutters.";
+        } else if (key === " " && state.gameOver) {
+          restartGame();
+        } else if (key === " ") {
+          triggerSelfDestruct();
+        } else {
+          keys.add(key);
+        }
+      });
+
+      window.addEventListener("keyup", (event) => keys.delete(event.key.toLowerCase()));
+
+      function skipToNextLevel() {
+        if (state.loading) return;
+        state.clearModalOpen = false;
+        state.levelWon = false;
+        state.paused = false;
+        state.gameOver = false;
+        state.grade += 1;
+        startLevel();
+        statusEl.textContent = "Test skip: next grade loaded.";
+      }
+
+      canvas.addEventListener("pointerdown", (event) => {
+        ensureMusicPlayback();
+        canvas.setPointerCapture(event.pointerId);
+        steerFromPointer(event);
+      });
+
+      canvas.addEventListener("pointermove", steerFromPointer);
+      canvas.addEventListener("pointerup", () => {
+        keys.delete("arrowleft");
+        keys.delete("arrowright");
+        keys.delete("arrowup");
+        keys.delete("arrowdown");
+      });
+
+      function setKey(key, active) {
+        if (active) keys.add(key);
+        else keys.delete(key);
+      }
+
+      function steerFromPointer(event) {
+        if (event.buttons === 0) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = ((event.clientX - rect.left) / rect.width) * W;
+        const y = ((event.clientY - rect.top) / rect.height) * H;
+        const dx = x - state.player.x;
+        const dy = y - state.player.y;
+        setKey("arrowleft", dx < -12);
+        setKey("arrowright", dx > 12);
+        setKey("arrowup", dy < -12);
+        setKey("arrowdown", dy > 12);
+      }
+
+      nextStageBtn.addEventListener("click", continueToNextStage);
+      copyShareBtn.addEventListener("click", async () => {
+        if (!state.stageResult) return;
+        const text = stageShareText(state.stageResult);
+        try {
+          await navigator.clipboard.writeText(text);
+          copyShareBtn.textContent = "Copied";
+          window.setTimeout(() => {
+            copyShareBtn.textContent = "Copy Text";
+          }, 1200);
+        } catch (error) {
+          copyShareBtn.textContent = "Copy Failed";
+          window.setTimeout(() => {
+            copyShareBtn.textContent = "Copy Text";
+          }, 1200);
+        }
+      });
+      shareInstagramEl.addEventListener("click", async () => {
+        const text = shareInstagramEl.dataset.shareText;
+        if (!text) return;
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch (error) {
+          console.error(error);
+        }
+      });
+      shareImageBtn.addEventListener("click", async () => {
+        try {
+          await shareStageImage();
+        } catch (error) {
+          console.error(error);
+          shareImageBtn.textContent = "Share Failed";
+          window.setTimeout(() => {
+            shareImageBtn.textContent = "Share Image";
+          }, 1200);
+        }
+      });
+      downloadImageBtn.addEventListener("click", async () => {
+        try {
+          await downloadStageImage();
+        } catch (error) {
+          console.error(error);
+          downloadImageBtn.textContent = "Download Failed";
+          window.setTimeout(() => {
+            downloadImageBtn.textContent = "Download Image";
+          }, 1200);
+        }
+      });
+      copyImageBtn.addEventListener("click", async () => {
+        try {
+          await copyStageImage();
+          copyImageBtn.textContent = "Image Copied";
+          window.setTimeout(() => {
+            copyImageBtn.textContent = "Copy Image";
+          }, 1200);
+        } catch (error) {
+          console.error(error);
+          copyImageBtn.textContent = "Copy Failed";
+          window.setTimeout(() => {
+            copyImageBtn.textContent = "Copy Image";
+          }, 1200);
+        }
+      });
+      musicToggleEl.addEventListener("click", toggleMusic);
+
+      initGame();
+      requestAnimationFrame(loop);
+    </script>
+  </body>
+</html>
