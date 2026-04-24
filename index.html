@@ -171,6 +171,56 @@
         touch-action: none;
       }
 
+      .game-stage {
+        position: relative;
+      }
+
+      .touch-joystick {
+        position: absolute;
+        left: 22px;
+        bottom: 22px;
+        width: 132px;
+        height: 132px;
+        border-radius: 50%;
+        background: rgba(10, 14, 18, 0.28);
+        border: 1px solid rgba(238, 244, 247, 0.16);
+        box-shadow:
+          inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+          0 8px 20px rgba(0, 0, 0, 0.24);
+        display: none;
+        touch-action: none;
+        backdrop-filter: blur(2px);
+      }
+
+      .touch-joystick.is-mobile {
+        display: block;
+      }
+
+      .touch-joystick-base,
+      .touch-joystick-knob {
+        position: absolute;
+        border-radius: 50%;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+      }
+
+      .touch-joystick-base {
+        width: 88px;
+        height: 88px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .touch-joystick-knob {
+        width: 44px;
+        height: 44px;
+        background: rgba(104, 215, 255, 0.38);
+        border: 1px solid rgba(220, 246, 255, 0.45);
+        box-shadow: 0 0 18px rgba(104, 215, 255, 0.18);
+      }
+
       .panel {
         min-height: 64px;
         background: #0a0e12;
@@ -832,7 +882,13 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
             </div>
           </div>
 
-          <canvas id="game" width="768" height="576" aria-label="Playable Obliquon game board"></canvas>
+          <div class="game-stage">
+            <canvas id="game" width="768" height="576" aria-label="Playable Obliquon game board"></canvas>
+            <div id="touch-joystick" class="touch-joystick" aria-hidden="true">
+              <div class="touch-joystick-base"></div>
+              <div id="touch-joystick-knob" class="touch-joystick-knob"></div>
+            </div>
+          </div>
 
           <div class="panel">
             <p id="status">Roll over every blinking beacon. Avoid the star cutters.</p>
@@ -909,6 +965,8 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
     <script>
       const canvas = document.querySelector("#game");
       const ctx = canvas.getContext("2d");
+      const joystickEl = document.querySelector("#touch-joystick");
+      const joystickKnobEl = document.querySelector("#touch-joystick-knob");
 
       const scoreEl = document.querySelector("#score");
       const levelEl = document.querySelector("#level");
@@ -943,6 +1001,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
       const TILE = 48;
       const COLS = W / TILE;
       const ROWS = H / TILE;
+      const IS_MOBILE = window.matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0;
       const SUPABASE_URL = "https://koaujbyenmmpwkwlqrff.supabase.co";
       const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_OjXlnwvDmQpsmtNR8qzLhw_Kn4SMlHe";
       const LEADERBOARD_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/rapid-processor`;
@@ -989,6 +1048,12 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
         playerName: "",
         currentRunId: null,
         stageResult: null,
+        touchJoystick: {
+          active: false,
+          pointerId: null,
+          dx: 0,
+          dy: 0
+        },
         shake: 0,
         flash: 0,
         grid: [],
@@ -2596,6 +2661,52 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
       function setKey(key, active) {
         if (active) keys.add(key);
         else keys.delete(key);
+      }
+
+      function clearMovementKeys() {
+        keys.delete("arrowleft");
+        keys.delete("arrowright");
+        keys.delete("arrowup");
+        keys.delete("arrowdown");
+      }
+
+      function updateJoystickVisual(dx, dy) {
+        joystickKnobEl.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+      }
+
+      function applyJoystickVector(dx, dy) {
+        const threshold = 14;
+        setKey("arrowleft", dx < -threshold);
+        setKey("arrowright", dx > threshold);
+        setKey("arrowup", dy < -threshold);
+        setKey("arrowdown", dy > threshold);
+      }
+
+      function releaseJoystick() {
+        state.touchJoystick.active = false;
+        state.touchJoystick.pointerId = null;
+        state.touchJoystick.dx = 0;
+        state.touchJoystick.dy = 0;
+        updateJoystickVisual(0, 0);
+        clearMovementKeys();
+      }
+
+      function handleMobilePrimaryAction() {
+        if (state.awaitingStart) {
+          beginStageSession().then((ok) => {
+            if (!ok) return;
+            state.awaitingStart = false;
+            statusEl.textContent = "Roll over every blinking beacon. Avoid the star cutters.";
+          });
+          return;
+        }
+        if (state.gameOver) {
+          restartGame();
+          return;
+        }
+        if (!state.loading && !state.clearModalOpen && !state.paused) {
+          triggerSelfDestruct();
+        }
       }
 
       function steerFromPointer(event) {
