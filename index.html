@@ -43,6 +43,59 @@
         padding: 18px;
       }
 
+      .shell-layout {
+        width: min(100%, 1540px);
+        display: grid;
+        grid-template-columns: 280px minmax(0, 936px) 280px;
+        gap: 16px;
+        align-items: start;
+      }
+
+      .side-panel {
+        border: 4px solid var(--bezel-edge);
+        border-radius: 8px;
+        background: linear-gradient(180deg, #12181d, #0a0d10);
+        box-shadow:
+          0 26px 60px rgba(0, 0, 0, .45),
+          inset 0 1px 0 rgba(255, 255, 255, .05);
+        overflow: hidden;
+      }
+
+      .side-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 14px 16px;
+        border-bottom: 2px solid #283239;
+        background: var(--score-strip);
+      }
+
+      .side-head h2 {
+        margin: 0;
+        color: var(--gold);
+        font: 700 22px "Courier New", monospace;
+      }
+
+      .side-body {
+        padding: 14px;
+      }
+
+      .tribute-text {
+        display: grid;
+        gap: 14px;
+      }
+
+      .tribute-text p {
+        margin: 0;
+        color: #d7e1e5;
+        font: 700 15px/1.55 "Courier New", monospace;
+      }
+
+      .tribute-signoff {
+        color: var(--gold);
+      }
+
       .cabinet {
         width: min(100%, 936px);
         border: 4px solid var(--bezel-edge);
@@ -278,6 +331,57 @@
         background: linear-gradient(180deg, #ffe28b, #efc64f);
       }
 
+      .leaderboard-panel {
+        margin: 0;
+        padding-top: 0;
+        border-top: 0;
+      }
+
+      .leaderboard-panel h3 {
+        margin: 0 0 10px;
+        color: #dce6eb;
+        font: 700 16px "Courier New", monospace;
+      }
+
+      .leaderboard-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .leaderboard-card {
+        border: 1px solid #2a3640;
+        border-radius: 6px;
+        background: #0d1216;
+        padding: 10px;
+      }
+
+      .leaderboard-card h4 {
+        margin: 0 0 8px;
+        color: #99b2b8;
+        font: 700 13px "Courier New", monospace;
+        text-transform: uppercase;
+      }
+
+      .leaderboard-card ol,
+      .leaderboard-card ul {
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .leaderboard-card li {
+        color: #eef6fb;
+        font: 700 13px/1.45 "Courier New", monospace;
+      }
+
+      .leaderboard-card li + li {
+        margin-top: 4px;
+      }
+
+      .leaderboard-note {
+        color: #99b2b8;
+        font: 700 13px "Courier New", monospace;
+      }
+
       .share-actions svg,
       .modal-actions svg {
         width: 16px;
@@ -290,6 +394,10 @@
         .shell {
           padding: 8px;
           place-items: start center;
+        }
+
+        .shell-layout {
+          grid-template-columns: 1fr;
         }
 
         .screen-bar,
@@ -483,12 +591,13 @@ G 5 5 5 6 5 5 5 5 5 5 4 5 5 5 T
  <script id="level04-data" type="text/plain">
 
 @player 6 0
-@target 3 2
-@target 13 2
-@target 3 9
-@target 13 9
-@target 6 6
-@target 9 5
+@target 7 3
+@target 8 3
+@target 12 6
+@target 4 7
+@target 3 3
+@target 14 1
+@target 1 0
 @enemy type1 3 3
 @enemy type2 14 3
 @enemy type3 7 11
@@ -508,42 +617,140 @@ G 5 5 5 6 5 5 5 5 5 5 4 5 5 5 T
 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
     </script>
 
+<script id="level05-data" type="text/plain">
+
+@player 8 3
+@target 0 0
+@target 15 0
+@target 6 4
+@target 12 2
+@target 11 8
+@target 3 8
+@target 15 11
+@target 0 11
+@enemy type1 4 3
+@enemy type1 11 3
+@enemy type2 8 5
+@enemy type3 4 8
+
+5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
+5 3 2 2 2 1 5 5 B 5 3 2 2 2 1 5
+5 6 5 5 5 4 5 5 5 5 6 5 5 5 4 5
+5 6 5 5 5 4 5 5 5 5 6 5 5 5 4 5
+5 6 5 B 5 4 5 5 5 5 6 5 5 5 4 5
+5 6 5 5 5 4 5 5 5 5 6 5 B 5 4 5
+5 6 5 5 5 I 2 2 2 2 E 5 5 5 4 5
+5 6 5 5 5 5 5 5 5 5 5 5 5 5 4 5
+5 6 5 5 5 5 5 5 B 5 5 5 5 5 4 5
+5 6 5 5 5 5 5 5 5 5 5 5 5 5 4 5
+5 9 8 8 8 8 8 8 8 8 8 8 8 8 7 5
+5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5    
+
+</script>
+
+<script id="level06-data" type="text/plain">
+
+@player 7 5
+@enemy type1 14 1
+@enemy type1 13 4
+@enemy type2 3 4
+@enemy type2 8 7
+@enemy type3 1 1
+@enemy type3 13 10
+
+5 5 5 3 E 5 5 5 5 5 5 I 1 5 5 5
+5 5 3 E 5 5 5 B 5 5 5 5 I 1 5 5
+5 3 E 5 B 5 5 5 5 5 B 5 5 I 1 5
+3 E 5 5 5 5 5 5 5 5 5 5 5 5 I 1
+E 5 5 5 5 5 5 5 5 5 5 5 5 5 5 I
+5 5 5 B 5 5 5 5 5 5 5 B 5 5 5 5
+5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
+G 5 5 5 5 5 5 5 5 5 5 5 5 5 5 T
+9 G 5 5 B 5 5 5 5 5 B 5 5 5 T 7
+5 9 G 5 5 5 5 B 5 5 5 5 5 T 7 5
+5 5 9 G 5 5 5 5 5 5 5 5 T 7 5 5
+5 5 5 9 G 5 5 5 5 5 5 T 7 5 5 5
+
+</script>
 
 
   </head>
   <body>
     <main class="shell">
-      <section class="cabinet" aria-label="Obliquon arcade game">
-        <div class="screen-bar">
-          <h1>OBLIQUON</h1>
-          <div class="hud" aria-live="polite">
-            <span>Score <strong id="score">00000</strong></span>
-            <span>Grade <strong id="level">1</strong></span>
-            <span>Balls <strong id="lives">3</strong></span>
-            <span class="timer">Time <strong id="timer">00:00</strong></span>
-            <button id="music-toggle" class="icon-button" type="button">Music On</button>
+      <div class="shell-layout">
+        <aside class="side-panel" aria-label="Leaderboard panel">
+          <div class="side-head">
+            <h2>LEADERS</h2>
+            <button id="change-name" class="icon-button" type="button">Change Name</button>
           </div>
-        </div>
-
-        <canvas id="game" width="768" height="576" aria-label="Playable Obliquon game board"></canvas>
-
-        <div class="panel">
-          <p id="status">Roll over every blinking beacon. Avoid the star cutters.</p>
-          <div class="controls" aria-label="Controls">
-            <kbd>Arrow Keys</kbd>
-            <kbd>WASD</kbd>
-            <kbd>Space Boom</kbd>
-            <kbd>P</kbd>
+          <div class="side-body">
+            <section class="leaderboard-panel" aria-label="Leaderboard">
+              <h3>Leaderboard</h3>
+              <div class="leaderboard-list">
+                <div class="leaderboard-card">
+                  <h4>Top 20 All-Time</h4>
+                  <ol id="lb-all-time"></ol>
+                </div>
+            <div class="leaderboard-card">
+              <h4>Best Scores This Grade</h4>
+              <ol id="lb-grade-score"></ol>
+            </div>
+            <div class="leaderboard-card">
+              <h4>Fastest Times This Grade</h4>
+              <ol id="lb-grade-time"></ol>
+            </div>
+                <div id="lb-status" class="leaderboard-note">Leaderboard idle.</div>
+              </div>
+            </section>
           </div>
-        </div>
-      </section>
+        </aside>
+
+        <section class="cabinet" aria-label="Obliquon arcade game">
+          <div class="screen-bar">
+            <h1>OBLIQUON</h1>
+            <div class="hud" aria-live="polite">
+              <span>Score <strong id="score">00000</strong></span>
+              <span>Grade <strong id="level">1</strong></span>
+              <span>Balls <strong id="lives">3</strong></span>
+              <span class="timer">Time <strong id="timer">00:00</strong></span>
+              <button id="music-toggle" class="icon-button" type="button">Music On</button>
+            </div>
+          </div>
+
+          <canvas id="game" width="768" height="576" aria-label="Playable Obliquon game board"></canvas>
+
+          <div class="panel">
+            <p id="status">Roll over every blinking beacon. Avoid the star cutters.</p>
+            <div class="controls" aria-label="Controls">
+              <kbd>Arrow Keys</kbd>
+              <kbd>WASD</kbd>
+              <kbd>Space Boom</kbd>
+              <kbd>P</kbd>
+            </div>
+          </div>
+        </section>
+
+        <aside class="side-panel" aria-label="Tribute note">
+          <div class="side-head">
+            <h2>TRIBUTE</h2>
+          </div>
+          <div class="side-body">
+            <div class="tribute-text">
+              <p>This is my tribute to a strange little classic that stayed with me for years. The original filled my childhood with sharp colors, strange geometry, and that special kind of arcade tension that made every run feel unforgettable.</p>
+              <p>More than anything, I remember playing it with my big brother. Those moments became some of my favorite childhood memories, and this remake is my way of honoring both the game and the time we shared with it.</p>
+              <p>It&rsquo;s far from perfect. I&rsquo;ll keep working to expand the levels and bring them closer to the spirit of the original, and maybe even push them further if time allows. For now, have fun and blast away.</p>
+              <p class="tribute-signoff">Vibe-coded by Overdrive.</p>
+            </div>
+          </div>
+        </aside>
+      </div>
     </main>
 
     <audio id="bgm" src="Myzolog.mp3" preload="auto" loop></audio>
 
     <div id="stage-modal" class="modal-backdrop" aria-hidden="true">
       <section class="modal" aria-label="Stage complete">
-        <h2>Stage Clear</h2>
+        <h2 id="modal-heading">Stage Clear</h2>
         <p id="stage-summary">You cleared the stage.</p>
         <div class="stats">
           <div><span>Time</span><strong id="modal-time">00:00</strong></div>
@@ -594,7 +801,9 @@ G 5 5 5 6 5 5 5 5 5 5 4 5 5 5 T
       const timerEl = document.querySelector("#timer");
       const statusEl = document.querySelector("#status");
       const musicToggleEl = document.querySelector("#music-toggle");
+      const changeNameBtn = document.querySelector("#change-name");
       const stageModalEl = document.querySelector("#stage-modal");
+      const modalHeadingEl = document.querySelector("#modal-heading");
       const stageSummaryEl = document.querySelector("#stage-summary");
       const modalTimeEl = document.querySelector("#modal-time");
       const modalPenaltyEl = document.querySelector("#modal-penalty");
@@ -608,6 +817,10 @@ G 5 5 5 6 5 5 5 5 5 5 4 5 5 5 T
       const shareInstagramEl = document.querySelector("#share-instagram");
       const shareRedditEl = document.querySelector("#share-reddit");
       const shareWhatsappEl = document.querySelector("#share-whatsapp");
+      const leaderboardAllTimeEl = document.querySelector("#lb-all-time");
+      const leaderboardGradeScoreEl = document.querySelector("#lb-grade-score");
+      const leaderboardGradeTimeEl = document.querySelector("#lb-grade-time");
+      const leaderboardStatusEl = document.querySelector("#lb-status");
       const bgmEl = document.querySelector("#bgm");
 
       const W = canvas.width;
@@ -615,6 +828,10 @@ G 5 5 5 6 5 5 5 5 5 5 4 5 5 5 T
       const TILE = 48;
       const COLS = W / TILE;
       const ROWS = H / TILE;
+      const SUPABASE_URL = "https://koaujbyenmmpwkwlqrff.supabase.co";
+      const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_OjXlnwvDmQpsmtNR8qzLhw_Kn4SMlHe";
+      const LEADERBOARD_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/rapid-processor`;
+      const PLAYER_NAME_STORAGE_KEY = "obliquon-player-name";
       const BASE_SPEED_SCALE = 0.36;
       const LEVEL_SPEED_GROWTH = 1.03;
       const PLAYER_ACCEL = 0.112;
@@ -653,6 +870,9 @@ G 5 5 5 6 5 5 5 5 5 5 4 5 5 5 T
         stagePenaltySteps: 0,
         clearModalOpen: false,
         awaitingStart: true,
+        campaignWon: false,
+        playerName: "",
+        currentRunId: null,
         stageResult: null,
         shake: 0,
         flash: 0,
@@ -788,6 +1008,8 @@ G 5 5 5 6 5 5 5 5 5 5 4 5 5 5 T
         state.stageElapsedMs = 0;
         state.stagePenaltySteps = 0;
         state.clearModalOpen = false;
+        state.campaignWon = false;
+        state.currentRunId = null;
         state.stageResult = null;
         state.loading = false;
         closeStageModal();
@@ -999,6 +1221,7 @@ G 5 5 5 6 5 5 5 5 5 5 4 5 5 5 T
         const spec = enemyTypes[kind];
         const spawnX = px ?? tx * TILE + TILE / 2;
         const spawnY = py ?? ty * TILE + TILE / 2;
+        const speedJitter = 0.95 + Math.random() * 0.1;
         return {
           x: spawnX,
           y: spawnY,
@@ -1010,7 +1233,7 @@ G 5 5 5 6 5 5 5 5 5 5 4 5 5 5 T
           type: kind,
           hue: spec.color,
           spin: Math.random() * Math.PI * 2,
-          speed: spec.speed,
+          speed: spec.speed * speedJitter,
           turnBias: Math.random() < 0.5 ? -1 : 1,
           chaos: Math.random() * Math.PI * 2,
           heading: Math.random() * Math.PI * 2,
@@ -1313,7 +1536,7 @@ G 5 5 5 6 5 5 5 5 5 5 4 5 5 5 T
             if (enemy.dead) continue;
             if (Math.hypot(fragment.x - enemy.x, fragment.y - enemy.y) < enemy.r + fragment.r + 2) {
               defeatEnemyTemporarily(enemy);
-              state.score += 250;
+              state.score += 200;
               awardExtraBalls();
               state.flash = 5;
             }
@@ -1485,11 +1708,12 @@ G 5 5 5 6 5 5 5 5 5 5 4 5 5 5 T
         if (collected) updateHud();
         if (state.beacons.every((b) => !b.on) && !state.levelWon) {
           state.levelWon = true;
+          state.campaignWon = state.grade >= loadedMaps.length;
           state.score += 1000 + state.grade * 250;
           awardExtraBalls();
           const result = buildStageResult();
           state.stageResult = result;
-          statusEl.textContent = "Grade clear.";
+          statusEl.textContent = state.campaignWon ? "You cleared Obliquon." : "Grade clear.";
           updateHud();
           openStageModal(result);
         }
@@ -1497,6 +1721,7 @@ G 5 5 5 6 5 5 5 5 5 5 4 5 5 5 T
 
       function loseLife() {
         state.lives -= 1;
+        state.score -= 100;
         state.shake = 16;
         updateHud();
         if (state.lives <= 0) {
@@ -1559,6 +1784,202 @@ G 5 5 5 6 5 5 5 5 5 5 4 5 5 5 T
           penalty,
           score: state.score
         };
+      }
+
+      function loadPlayerName() {
+        try {
+          state.playerName = localStorage.getItem(PLAYER_NAME_STORAGE_KEY) || "";
+        } catch {
+          state.playerName = "";
+        }
+      }
+
+      function savePlayerName(name) {
+        state.playerName = name;
+        try {
+          localStorage.setItem(PLAYER_NAME_STORAGE_KEY, name);
+        } catch {
+          // Ignore storage failures and keep the in-memory name.
+        }
+      }
+
+      function ensurePlayerName() {
+        if (state.playerName) return true;
+        return promptForPlayerName(false);
+      }
+
+      function promptForPlayerName(forcePrompt = false) {
+        if (!forcePrompt && state.playerName) return true;
+        const seed = forcePrompt ? state.playerName : "";
+        const raw = window.prompt("Choose a leaderboard name (1-20 letters, numbers, space, _, -, .)", seed) ?? "";
+        const name = raw.trim().replace(/\s+/g, " ").slice(0, 20);
+        if (!/^[A-Za-z0-9 _.-]{1,20}$/.test(name)) {
+          statusEl.textContent = "A valid leaderboard name is required.";
+          return false;
+        }
+        savePlayerName(name);
+        leaderboardStatusEl.textContent = `Current player: ${state.playerName}`;
+        return true;
+      }
+
+      async function leaderboardFetch(url, options = {}) {
+        const headers = {
+          apikey: SUPABASE_PUBLISHABLE_KEY,
+          ...options.headers
+        };
+        const response = await fetch(url, {
+          ...options,
+          headers
+        });
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(text || `Leaderboard request failed (${response.status})`);
+        }
+        return response.json();
+      }
+
+      async function startTrustedRun() {
+        const payload = await leaderboardFetch(LEADERBOARD_FUNCTION_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            action: "start-run",
+            grade: state.grade
+          })
+        });
+        state.currentRunId = payload?.run?.id ?? null;
+      }
+
+      async function submitTrustedScore(result) {
+        if (!state.currentRunId) {
+          return { ok: false, error: "Run token missing." };
+        }
+        const submittedTimeMs = Math.max(1000, Math.floor(result.timeMs));
+        try {
+          await leaderboardFetch(LEADERBOARD_FUNCTION_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              action: "submit-score",
+              runId: state.currentRunId,
+              playerName: state.playerName,
+              score: result.score,
+              grade: result.grade,
+              timeMs: submittedTimeMs
+            })
+          });
+          state.currentRunId = null;
+          return { ok: true };
+        } catch (error) {
+          return { ok: false, error: String(error && error.message ? error.message : error) };
+        }
+      }
+
+      async function fetchLeaderboards(grade) {
+        return leaderboardFetch(LEADERBOARD_FUNCTION_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            action: "get-leaderboards",
+            grade
+          })
+        });
+      }
+
+      function renderLeaderboardRow(entry) {
+        return `${entry.player_name}  ${String(entry.score).padStart(5, "0")}  G${entry.grade}`;
+      }
+
+      function fillLeaderboardList(listEl, entries, emptyText) {
+        listEl.innerHTML = "";
+        if (!Array.isArray(entries) || entries.length === 0) {
+          const li = document.createElement("li");
+          li.textContent = emptyText;
+          listEl.appendChild(li);
+          return;
+        }
+        for (const entry of entries) {
+          const li = document.createElement("li");
+          li.textContent = `${entry.player_name}  ${String(entry.score).padStart(5, "0")}  ${formatTime(entry.time_ms)}`;
+          listEl.appendChild(li);
+        }
+      }
+
+      async function populateLeaderboard(result, submissionState) {
+        leaderboardAllTimeEl.innerHTML = "";
+        fillLeaderboardList(leaderboardGradeScoreEl, [], "Loading...");
+        fillLeaderboardList(leaderboardGradeTimeEl, [], "Loading...");
+        leaderboardStatusEl.textContent = submissionState.ok
+          ? `Submitted as ${state.playerName}.`
+          : `Submission issue: ${submissionState.error}`;
+
+        try {
+          const data = await fetchLeaderboards(result.grade);
+          const allTime = Array.isArray(data?.top_scores_all_time) ? data.top_scores_all_time : [];
+          const bestScores = Array.isArray(data?.best_scores_for_grade)
+            ? data.best_scores_for_grade
+            : data?.best_score_for_grade
+              ? [data.best_score_for_grade]
+              : [];
+          const fastestTimes = Array.isArray(data?.fastest_times_for_grade)
+            ? data.fastest_times_for_grade
+            : data?.fastest_time_for_grade
+              ? [data.fastest_time_for_grade]
+              : [];
+
+          if (allTime.length === 0) {
+            const li = document.createElement("li");
+            li.textContent = "No scores yet.";
+            leaderboardAllTimeEl.appendChild(li);
+          } else {
+            for (const entry of allTime) {
+              const li = document.createElement("li");
+              li.textContent = renderLeaderboardRow(entry);
+              leaderboardAllTimeEl.appendChild(li);
+            }
+          }
+
+          fillLeaderboardList(leaderboardGradeScoreEl, bestScores, "No score yet.");
+          fillLeaderboardList(leaderboardGradeTimeEl, fastestTimes, "No time yet.");
+          if (submissionState.ok) {
+            leaderboardStatusEl.textContent = `Submitted as ${state.playerName}.`;
+          } else {
+            leaderboardStatusEl.textContent = `Read ok. Submission issue: ${submissionState.error}`;
+          }
+        } catch (error) {
+          fillLeaderboardList(leaderboardGradeScoreEl, [], "Unavailable.");
+          fillLeaderboardList(leaderboardGradeTimeEl, [], "Unavailable.");
+          leaderboardStatusEl.textContent = `Leaderboard error: ${String(error && error.message ? error.message : error)}`;
+        }
+      }
+
+      async function beginStageSession() {
+        if (!ensurePlayerName()) return false;
+        try {
+          await startTrustedRun();
+          await populateLeaderboard(
+            {
+              grade: state.grade,
+              timeMs: state.stageElapsedMs,
+              penalty: state.stagePenaltySteps * STAGE_PENALTY_POINTS,
+              score: state.score
+            },
+            {
+              ok: true,
+              error: ""
+            }
+          );
+          return true;
+        } catch (error) {
+          statusEl.textContent = `Leaderboard start failed: ${String(error && error.message ? error.message : error)}`;
+          return false;
+        }
       }
 
       function formatTime(ms) {
@@ -1897,9 +2318,13 @@ G 5 5 5 6 5 5 5 5 5 5 4 5 5 5 T
         await downloadStageImage();
       }
 
-      function openStageModal(result) {
+      async function openStageModal(result) {
         state.clearModalOpen = true;
-        stageSummaryEl.textContent = `Grade ${result.grade} cleared in ${formatTime(result.timeMs)}.`;
+        modalHeadingEl.textContent = state.campaignWon ? "You Win" : "Stage Clear";
+        nextStageBtn.textContent = state.campaignWon ? "Play Again [Enter]" : "Next Stage [Enter]";
+        stageSummaryEl.textContent = state.campaignWon
+          ? `You cleared the final grade in ${formatTime(result.timeMs)}.`
+          : `Grade ${result.grade} cleared in ${formatTime(result.timeMs)}.`;
         modalTimeEl.textContent = formatTime(result.timeMs);
         modalPenaltyEl.textContent = String(result.penalty).padStart(5, "0");
         modalScoreEl.textContent = String(result.score).padStart(5, "0");
@@ -1923,6 +2348,8 @@ G 5 5 5 6 5 5 5 5 5 5 4 5 5 5 T
         shareInstagramEl.dataset.shareText = text;
         stageModalEl.classList.add("is-open");
         stageModalEl.setAttribute("aria-hidden", "false");
+        const submissionState = await submitTrustedScore(result);
+        await populateLeaderboard(result, submissionState);
       }
 
       function closeStageModal() {
@@ -1931,10 +2358,16 @@ G 5 5 5 6 5 5 5 5 5 5 4 5 5 5 T
       }
 
       function continueToNextStage() {
+        if (state.campaignWon) {
+          state.clearModalOpen = false;
+          restartGame();
+          return;
+        }
         state.clearModalOpen = false;
         state.levelWon = false;
         state.grade += 1;
         startLevel();
+        beginStageSession();
       }
 
       function loop(time) {
@@ -1967,6 +2400,7 @@ G 5 5 5 6 5 5 5 5 5 5 4 5 5 5 T
 
       function initGame() {
         try {
+          loadPlayerName();
           loadMaps();
           startLevel();
           state.awaitingStart = true;
@@ -1987,8 +2421,11 @@ G 5 5 5 6 5 5 5 5 5 5 4 5 5 5 T
         }
         if (state.awaitingStart && key === " ") {
           event.preventDefault();
-          state.awaitingStart = false;
-          statusEl.textContent = "Roll over every blinking beacon. Avoid the star cutters.";
+          beginStageSession().then((ok) => {
+            if (!ok) return;
+            state.awaitingStart = false;
+            statusEl.textContent = "Roll over every blinking beacon. Avoid the star cutters.";
+          });
           return;
         }
         if (key === "l") {
@@ -2021,6 +2458,7 @@ G 5 5 5 6 5 5 5 5 5 5 4 5 5 5 T
         state.gameOver = false;
         state.grade += 1;
         startLevel();
+        beginStageSession();
         statusEl.textContent = "Test skip: next grade loaded.";
       }
 
@@ -2057,6 +2495,11 @@ G 5 5 5 6 5 5 5 5 5 5 4 5 5 5 T
       }
 
       nextStageBtn.addEventListener("click", continueToNextStage);
+      changeNameBtn.addEventListener("click", () => {
+        if (promptForPlayerName(true)) {
+          statusEl.textContent = `Leaderboard name set to ${state.playerName}.`;
+        }
+      });
       copyShareBtn.addEventListener("click", async () => {
         if (!state.stageResult) return;
         const text = stageShareText(state.stageResult);
