@@ -94,6 +94,13 @@
         gap: 8px;
       }
 
+      .control-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: end;
+      }
+
       .control-group h3 {
         margin: 0;
         color: var(--muted);
@@ -101,9 +108,21 @@
         text-transform: uppercase;
       }
 
+      .control-group label {
+        color: var(--muted);
+        font: 700 13px "Courier New", monospace;
+      }
+
       .swatches {
         display: flex;
         flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .swatches.keypad {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-rows: repeat(3, auto);
         gap: 8px;
       }
 
@@ -118,6 +137,8 @@
         color: var(--text);
         font: 700 13px "Courier New", monospace;
         cursor: pointer;
+        width: 100%;
+        justify-content: flex-start;
       }
 
       .swatch.is-active {
@@ -157,6 +178,16 @@
         background: #182128;
       }
 
+      input[type="number"] {
+        width: 100%;
+        border: 1px solid var(--edge);
+        border-radius: 6px;
+        background: #0b1115;
+        color: #eef5f8;
+        padding: 10px 12px;
+        font: 700 15px "Courier New", monospace;
+      }
+
       .primary {
         color: #0d1114;
         background: linear-gradient(180deg, #f7db74, #e9bc3d);
@@ -169,7 +200,7 @@
 
       textarea {
         width: 100%;
-        min-height: 640px;
+        min-height: 0;
         resize: vertical;
         border: 1px solid var(--edge);
         border-radius: 6px;
@@ -178,6 +209,10 @@
         padding: 14px;
         font: 700 18px/1.45 "Courier New", monospace;
         tab-size: 2;
+      }
+
+      #ascii-grid {
+        height: 352px;
       }
 
       .export {
@@ -248,9 +283,16 @@
           </div>
           <div class="panel-body">
             <div class="controls">
+              <div class="control-row">
+                <div class="control-group" style="min-width: 160px;">
+                  <h3>Level Number</h3>
+                  <label for="level-number">Used in the script id</label>
+                  <input id="level-number" type="number" min="1" step="1" value="1">
+                </div>
+              </div>
               <div class="control-group">
                 <h3>Tile Paint</h3>
-                <div class="swatches" id="swatches"></div>
+                <div class="swatches keypad" id="swatches"></div>
               </div>
               <div class="control-group">
                 <h3>Markers</h3>
@@ -265,7 +307,7 @@
             </div>
             <div class="export">
               <div class="actions" style="margin-bottom:8px;">
-                <button id="copy-level" class="primary" type="button">Copy Full Level Data</button>
+                <button id="copy-level" class="primary" type="button">Copy Script Block</button>
               </div>
               <textarea id="level-output" spellcheck="false" readonly></textarea>
             </div>
@@ -295,6 +337,7 @@
       const ctx = canvas.getContext("2d");
       const statusEl = document.querySelector("#status");
       const coordsEl = document.querySelector("#coords");
+      const levelNumberEl = document.querySelector("#level-number");
       const swatchesEl = document.querySelector("#swatches");
       const entityToolsEl = document.querySelector("#entity-tools");
       const copyBtn = document.querySelector("#copy-grid");
@@ -333,20 +376,20 @@
       };
 
       const palette = [
-        { token: "5", label: "Flat", color: terrainColors.flat },
-        { token: "8", label: "North", color: terrainColors.north },
-        { token: "2", label: "South", color: terrainColors.south },
-        { token: "4", label: "West", color: terrainColors.west },
-        { token: "6", label: "East", color: terrainColors.east },
-        { token: "7", label: "NW", color: terrainColors.northwest },
-        { token: "9", label: "NE", color: terrainColors.northeast },
-        { token: "1", label: "SW", color: terrainColors.southwest },
-        { token: "3", label: "SE", color: terrainColors.southeast },
-        { token: "T", label: "NW Inv", color: terrainColors.northwest },
-        { token: "G", label: "NE Inv", color: terrainColors.northeast },
-        { token: "I", label: "SW Inv", color: terrainColors.southwest },
-        { token: "E", label: "SE Inv", color: terrainColors.southeast },
-        { token: "B", label: "Block", color: "#56636b" }
+        { token: "T", label: "NW Inv", color: terrainColors.northwest, row: 1, col: 1 },
+        { token: "7", label: "NW", color: terrainColors.northwest, row: 1, col: 2 },
+        { token: "8", label: "North", color: terrainColors.north, row: 1, col: 3 },
+        { token: "9", label: "NE", color: terrainColors.northeast, row: 1, col: 4 },
+        { token: "G", label: "NE Inv", color: terrainColors.northeast, row: 1, col: 5 },
+        { token: "4", label: "West", color: terrainColors.west, row: 2, col: 1 },
+        { token: "5", label: "Flat", color: terrainColors.flat, row: 2, col: 2 },
+        { token: "6", label: "East", color: terrainColors.east, row: 2, col: 3 },
+        { token: "B", label: "Block", color: "#56636b", row: 2, col: 5 },
+        { token: "I", label: "SW Inv", color: terrainColors.southwest, row: 3, col: 1 },
+        { token: "1", label: "SW", color: terrainColors.southwest, row: 3, col: 2 },
+        { token: "2", label: "South", color: terrainColors.south, row: 3, col: 3 },
+        { token: "3", label: "SE", color: terrainColors.southeast, row: 3, col: 4 },
+        { token: "E", label: "SE Inv", color: terrainColors.southeast, row: 3, col: 5 }
       ];
 
       const entityTools = [
@@ -644,6 +687,8 @@
           button.type = "button";
           button.className = `swatch${item.token === selectedToken ? " is-active" : ""}`;
           button.dataset.token = item.token;
+          button.style.gridColumn = String(item.col);
+          button.style.gridRow = String(item.row);
           button.innerHTML = `<span class="swatch-chip" style="background:${item.color}"></span><span>${item.token} ${item.label}</span>`;
           button.addEventListener("click", () => {
             selectedToken = item.token;
@@ -679,6 +724,14 @@
         for (const tool of entityToolsEl.children) {
           tool.classList.toggle("is-active", toolMode === "marker" && tool.dataset.token === selectedEntity);
         }
+      }
+
+      function selectTileToken(token) {
+        if (!palette.some((item) => item.token === token)) return;
+        selectedToken = token;
+        toolMode = "tile";
+        refreshToolHighlights();
+        syncPreview();
       }
 
       function asciiRows() {
@@ -731,6 +784,8 @@
       }
 
       function buildLevelData() {
+        const levelNumber = Math.max(1, Number(levelNumberEl.value || 1));
+        const levelId = `level${String(levelNumber).padStart(2, "0")}-data`;
         const lines = [];
         if (markers.player) {
           lines.push(`@player ${markers.player.tx} ${markers.player.ty}`);
@@ -745,7 +800,7 @@
           lines.push("");
         }
         lines.push(asciiEl.value.trim());
-        return lines.join("\n");
+        return `<script id="${levelId}" type="text/plain">\n${lines.join("\n")}\n<\/script>`;
       }
 
       function pointerTile(event) {
@@ -757,6 +812,17 @@
       }
 
       asciiEl.addEventListener("input", syncPreview);
+      levelNumberEl.addEventListener("input", syncPreview);
+
+      window.addEventListener("keydown", (event) => {
+        const target = event.target;
+        if (target === asciiEl || target === levelOutputEl || target === levelNumberEl) return;
+        const key = event.key.length === 1 ? event.key.toUpperCase() : event.key;
+        if ("123456789BGETI".includes(key)) {
+          event.preventDefault();
+          selectTileToken(key);
+        }
+      });
 
       canvas.addEventListener("click", (event) => {
         const tile = pointerTile(event);
