@@ -1151,6 +1151,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
     <script>
       const canvas = document.querySelector("#game");
       const ctx = canvas.getContext("2d");
+      const gameStageEl = document.querySelector(".game-stage");
       const joystickEl = document.querySelector("#touch-joystick");
       const joystickKnobEl = document.querySelector("#touch-joystick-knob");
       const boomButtonEl = document.querySelector("#touch-boom");
@@ -2804,6 +2805,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
           if (IS_MOBILE) {
             joystickEl.classList.add("is-mobile");
             boomButtonEl.classList.add("is-mobile");
+            layoutMobileControls();
             if (controlKeysEls.length >= 4) {
               controlKeysEls[0].textContent = "Touch Stick";
               controlKeysEls[1].textContent = "Tap Start";
@@ -2855,6 +2857,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
       });
 
       window.addEventListener("keyup", (event) => keys.delete(event.key.toLowerCase()));
+      window.addEventListener("resize", layoutMobileControls);
 
       function skipToNextLevel() {
         if (state.loading) return;
@@ -2905,6 +2908,42 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
 
       function updateJoystickVisual(dx, dy) {
         joystickKnobEl.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+      }
+
+      function layoutMobileControls() {
+        if (!IS_MOBILE) return;
+        const landscape = window.matchMedia("(orientation: landscape)").matches;
+        if (!landscape) {
+          joystickEl.style.left = "";
+          joystickEl.style.right = "";
+          joystickEl.style.top = "";
+          joystickEl.style.bottom = "";
+          joystickEl.style.transform = "";
+          boomButtonEl.style.left = "";
+          boomButtonEl.style.right = "";
+          boomButtonEl.style.top = "";
+          boomButtonEl.style.bottom = "";
+          boomButtonEl.style.transform = "";
+          return;
+        }
+
+        const stageRect = gameStageEl.getBoundingClientRect();
+        const canvasRect = canvas.getBoundingClientRect();
+        const leftGutter = Math.max(0, canvasRect.left - stageRect.left);
+        const rightGutter = Math.max(0, stageRect.right - canvasRect.right);
+        const midY = stageRect.height / 2;
+
+        joystickEl.style.left = `${leftGutter / 2}px`;
+        joystickEl.style.right = "auto";
+        joystickEl.style.top = `${midY}px`;
+        joystickEl.style.bottom = "auto";
+        joystickEl.style.transform = "translate(-50%, -50%)";
+
+        boomButtonEl.style.left = "auto";
+        boomButtonEl.style.right = `${rightGutter / 2}px`;
+        boomButtonEl.style.top = `${midY}px`;
+        boomButtonEl.style.bottom = "auto";
+        boomButtonEl.style.transform = "translate(50%, -50%)";
       }
 
       function applyJoystickVector(dx, dy) {
