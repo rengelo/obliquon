@@ -1210,6 +1210,9 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
       const EXTRA_BALL_POINTS = 5000;
       const STAGE_PENALTY_INTERVAL_MS = 10000;
       const STAGE_PENALTY_POINTS = 50;
+      const STAGE_INTRO_MS = 3000;
+      const PLAYER_RESPAWN_DELAY_MS = 2000;
+      const PLAYER_RESPAWN_INVINCIBLE_TICKS = 330;
       const FIXED_STEP_MS = 1000 / 120;
       const MAX_FRAME_CATCHUP_MS = 150;
       const ENEMY_PLANS = [
@@ -1235,6 +1238,8 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
         extraBallThreshold: EXTRA_BALL_POINTS,
         stageElapsedMs: 0,
         stagePenaltySteps: 0,
+        stageIntroMs: 0,
+        respawnMs: 0,
         clearModalOpen: false,
         awaitingStart: true,
         campaignWon: false,
@@ -1377,18 +1382,21 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
         state.enemies = placeEnemies(level, state.grade);
         state.fragments = [];
         state.player = makePlayerFromLevel(level);
+        state.player.active = false;
         state.levelWon = false;
         state.paused = false;
         state.exploding = false;
         state.stageElapsedMs = 0;
         state.stagePenaltySteps = 0;
+        state.stageIntroMs = STAGE_INTRO_MS;
+        state.respawnMs = 0;
         state.clearModalOpen = false;
         state.campaignWon = false;
         state.currentRunId = null;
         state.stageResult = null;
         state.loading = false;
         closeStageModal();
-        statusEl.textContent = "Roll over every blinking beacon. Avoid the star cutters.";
+        statusEl.textContent = "Get ready.";
         updateHud();
       }
 
@@ -1545,6 +1553,18 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
         player.x = level.player.tx * TILE + TILE / 2;
         player.y = level.player.ty * TILE + TILE / 2;
         return player;
+      }
+
+      function makeRespawnPlayer(level) {
+        const centerTx = Math.floor(COLS / 2);
+        const centerTy = Math.floor(ROWS / 2);
+        if (!level.grid[centerTy][centerTx].block) {
+          const player = makePlayer();
+          player.x = centerTx * TILE + TILE / 2;
+          player.y = centerTy * TILE + TILE / 2;
+          return player;
+        }
+        return makePlayerFromLevel(level);
       }
 
       function placeBeacons(level, grade) {
@@ -1891,6 +1911,13 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
         loseLife();
       }
 
+      function activatePlayerRespawn() {
+        state.respawnMs = 0;
+        state.player.active = true;
+        state.player.invincible = PLAYER_RESPAWN_INVINCIBLE_TICKS;
+        statusEl.textContent = "Roll over every blinking beacon. Avoid the star cutters.";
+      }
+
       function updateFragments() {
         if (!state.exploding) return;
         const next = [];
@@ -2113,11 +2140,16 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
           state.gameOver = true;
           statusEl.textContent = IS_MOBILE ? "Game over. Tap to roll again." : "Game over. Press Space to roll again.";
         } else {
-          statusEl.textContent = "Watch the star cutters. Keep rolling.";
-          state.player = makePlayerFromLevel(levelDataAt(state.grade));
-          state.player.invincible = 110;
+          statusEl.textContent = "Hold on. Respawning...";
+          state.player = makeRespawnPlayer(levelDataAt(state.grade));
+          state.player.active = false;
+          state.player.vx = 0;
+          state.player.vy = 0;
+          state.respawnMs = PLAYER_RESPAWN_DELAY_MS;
           state.exploding = false;
           state.fragments = [];
+          clearMovementKeys();
+          updateJoystickVisual(0, 0);
         }
       }
 
@@ -2130,14 +2162,29 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
 
       function update(deltaMs) {
         if (state.loading || state.paused || state.gameOver || state.clearModalOpen || state.awaitingStart) return;
+        if (state.stageIntroMs > 0) {
+          state.stageIntroMs = Math.max(0, state.stageIntroMs - deltaMs);
+          if (state.stageIntroMs === 0) {
+            activatePlayerRespawn();
+          }
+          updateHud();
+          return;
+        }
         state.stageElapsedMs += deltaMs;
         applyStagePenalty();
         if (state.levelWon) return;
         updateEnemyRespawns(deltaMs);
-        updatePlayer();
         updateEnemies();
         updateFragments();
-        collectBeacons();
+        if (state.respawnMs > 0) {
+          state.respawnMs = Math.max(0, state.respawnMs - deltaMs);
+          if (state.respawnMs === 0) {
+            activatePlayerRespawn();
+          }
+        } else {
+          updatePlayer();
+          collectBeacons();
+        }
         state.flash = Math.max(0, state.flash - 1);
         state.shake = Math.max(0, state.shake - 1);
         updateHud();
@@ -2505,6 +2552,34 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
           return;
         }
 
+        if (!state.awaitingStart && state.stageIntroMs > 0) {
+          const count = Math.max(1, Math.ceil(state.stageIntroMs / 1000));
+          ctx.fillStyle = "rgba(0, 0, 0, .46)";
+          ctx.fillRect(0, 0, W, H);
+          ctx.fillStyle = "#dce6eb";
+          ctx.textAlign = "center";
+          ctx.font = "700 22px Courier New";
+          ctx.fillText("GET READY", W / 2, H / 2 - 46);
+          ctx.fillStyle = "#f4d35e";
+          ctx.font = "700 86px Courier New";
+          ctx.fillText(String(count), W / 2, H / 2 + 28);
+          return;
+        }
+
+        if (!state.awaitingStart && state.respawnMs > 0) {
+          const count = Math.max(1, Math.ceil(state.respawnMs / 1000));
+          ctx.fillStyle = "rgba(0, 0, 0, .36)";
+          ctx.fillRect(0, 0, W, H);
+          ctx.fillStyle = "#dce6eb";
+          ctx.textAlign = "center";
+          ctx.font = "700 24px Courier New";
+          ctx.fillText("READY", W / 2, H / 2 - 38);
+          ctx.fillStyle = "#f4d35e";
+          ctx.font = "700 72px Courier New";
+          ctx.fillText(String(count), W / 2, H / 2 + 26);
+          return;
+        }
+
         if (state.awaitingStart) {
           const blink = 0.5 + 0.5 * Math.sin(performance.now() / 260);
           const panel = ctx.createLinearGradient(0, 0, W, H);
@@ -2565,7 +2640,9 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
         }
         drawGrid();
         drawBeacons(time);
-        for (const e of state.enemies) drawStar(e);
+        if (state.stageIntroMs <= 0) {
+          for (const e of state.enemies) drawStar(e);
+        }
         drawFragments();
         drawPlayer(time);
         ctx.restore();
@@ -2832,7 +2909,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
           beginStageSession().then((ok) => {
             if (!ok) return;
             state.awaitingStart = false;
-            statusEl.textContent = "Roll over every blinking beacon. Avoid the star cutters.";
+            statusEl.textContent = "Get ready.";
           });
           return;
         }
@@ -2969,7 +3046,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
           beginStageSession().then((ok) => {
             if (!ok) return;
             state.awaitingStart = false;
-            statusEl.textContent = "Roll over every blinking beacon. Avoid the star cutters.";
+            statusEl.textContent = "Get ready.";
           });
           return;
         }
