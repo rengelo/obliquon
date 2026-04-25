@@ -192,7 +192,8 @@
         backdrop-filter: blur(2px);
       }
 
-      .touch-joystick.is-mobile {
+      .touch-joystick.is-mobile,
+      .touch-boom.is-mobile {
         display: block;
       }
 
@@ -219,6 +220,32 @@
         background: rgba(104, 215, 255, 0.38);
         border: 1px solid rgba(220, 246, 255, 0.45);
         box-shadow: 0 0 18px rgba(104, 215, 255, 0.18);
+      }
+
+      .touch-boom {
+        position: absolute;
+        right: 22px;
+        bottom: 22px;
+        width: 112px;
+        height: 112px;
+        border: 1px solid rgba(255, 150, 120, 0.26);
+        border-radius: 50%;
+        background: rgba(38, 12, 10, 0.34);
+        color: #ffd3bf;
+        box-shadow:
+          inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+          0 8px 20px rgba(0, 0, 0, 0.24);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        touch-action: manipulation;
+        backdrop-filter: blur(2px);
+        font: 700 20px "Courier New", monospace;
+        letter-spacing: 0;
+      }
+
+      .touch-boom:active {
+        background: rgba(74, 18, 12, 0.48);
       }
 
       .panel {
@@ -479,6 +506,14 @@
           transform: translateX(-50%);
         }
 
+        .touch-boom {
+          right: 14px;
+          bottom: 24px;
+          width: 94px;
+          height: 94px;
+          font-size: 17px;
+        }
+
         h1 {
           font-size: 26px;
         }
@@ -578,11 +613,38 @@
           height: 34px;
         }
 
+        .touch-boom {
+          width: 82px;
+          height: 82px;
+          font-size: 15px;
+          bottom: 12px;
+        }
+
         kbd,
         .icon-button {
           min-width: 44px;
           padding: 5px 7px;
           font-size: 11px;
+        }
+      }
+
+      @media (orientation: landscape) and (pointer: coarse) {
+        .game-stage {
+          padding-bottom: 0;
+          padding-left: 108px;
+          padding-right: 96px;
+        }
+
+        .touch-joystick {
+          left: 8px;
+          bottom: 50%;
+          transform: translateY(50%);
+        }
+
+        .touch-boom {
+          right: 8px;
+          bottom: 50%;
+          transform: translateY(50%);
         }
       }
     </style>
@@ -1007,6 +1069,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
               <div class="touch-joystick-base"></div>
               <div id="touch-joystick-knob" class="touch-joystick-knob"></div>
             </div>
+            <button id="touch-boom" class="touch-boom" type="button" aria-label="Explode the ball">BOOM</button>
           </div>
 
           <div class="panel">
@@ -1086,6 +1149,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
       const ctx = canvas.getContext("2d");
       const joystickEl = document.querySelector("#touch-joystick");
       const joystickKnobEl = document.querySelector("#touch-joystick-knob");
+      const boomButtonEl = document.querySelector("#touch-boom");
 
       const scoreEl = document.querySelector("#score");
       const levelEl = document.querySelector("#level");
@@ -2735,6 +2799,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
           statusEl.textContent = IS_MOBILE ? "Tap to start." : "Press Space to start.";
           if (IS_MOBILE) {
             joystickEl.classList.add("is-mobile");
+            boomButtonEl.classList.add("is-mobile");
             if (controlKeysEls.length >= 4) {
               controlKeysEls[0].textContent = "Touch Stick";
               controlKeysEls[1].textContent = "Tap Start";
@@ -2802,7 +2867,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
       canvas.addEventListener("pointerdown", (event) => {
         ensureMusicPlayback();
         if (IS_MOBILE) {
-          handleMobilePrimaryAction();
+          handleMobilePrimaryAction("start");
           return;
         }
         canvas.setPointerCapture(event.pointerId);
@@ -2856,7 +2921,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
         clearMovementKeys();
       }
 
-      function handleMobilePrimaryAction() {
+      function handleMobilePrimaryAction(action = "start") {
         if (state.awaitingStart) {
           beginStageSession().then((ok) => {
             if (!ok) return;
@@ -2869,7 +2934,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
           restartGame();
           return;
         }
-        if (!state.loading && !state.clearModalOpen && !state.paused) {
+        if (action === "boom" && !state.loading && !state.clearModalOpen && !state.paused) {
           triggerSelfDestruct();
         }
       }
@@ -2911,6 +2976,10 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
         ensureMusicPlayback();
         event.preventDefault();
         event.stopPropagation();
+        if (state.awaitingStart || state.gameOver) {
+          handleMobilePrimaryAction();
+          return;
+        }
         joystickEl.setPointerCapture(event.pointerId);
         state.touchJoystick.active = true;
         state.touchJoystick.pointerId = event.pointerId;
@@ -2934,6 +3003,14 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
         if (!IS_MOBILE) return;
         if (state.touchJoystick.pointerId !== event.pointerId) return;
         releaseJoystick();
+      });
+
+      boomButtonEl.addEventListener("pointerdown", (event) => {
+        if (!IS_MOBILE) return;
+        ensureMusicPlayback();
+        event.preventDefault();
+        event.stopPropagation();
+        handleMobilePrimaryAction("boom");
       });
 
       nextStageBtn.addEventListener("click", continueToNextStage);
