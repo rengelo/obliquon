@@ -488,6 +488,103 @@
           font-size: 14px;
         }
       }
+
+      @media (orientation: landscape) and (pointer: coarse), (orientation: landscape) and (max-height: 540px) {
+        .shell {
+          padding: 4px;
+        }
+
+        .shell-layout {
+          width: 100%;
+          max-width: 100%;
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
+        }
+
+        .cabinet {
+          order: 1;
+          grid-column: 1 / -1;
+          width: min(100%, calc((100dvh - 112px) * 4 / 3));
+          margin-inline: auto;
+        }
+
+        .side-panel[aria-label="Leaderboard panel"] {
+          order: 2;
+        }
+
+        .side-panel[aria-label="Tribute note"] {
+          order: 3;
+        }
+
+        .screen-bar {
+          padding: 8px 10px;
+          gap: 10px;
+        }
+
+        .panel {
+          padding: 8px 10px;
+          gap: 10px;
+        }
+
+        h1 {
+          font-size: 22px;
+        }
+
+        .hud {
+          gap: 8px;
+        }
+
+        .hud span,
+        .panel p,
+        .tribute-text p,
+        .leaderboard-panel h3,
+        .leaderboard-card h4,
+        .leaderboard-card li,
+        .leaderboard-status {
+          font-size: 12px;
+        }
+
+        .side-head {
+          padding: 10px 12px;
+        }
+
+        .side-head h2 {
+          font-size: 18px;
+        }
+
+        .side-body {
+          padding: 10px;
+          max-height: 28dvh;
+          overflow: auto;
+        }
+
+        .game-stage {
+          padding-bottom: 106px;
+        }
+
+        .touch-joystick {
+          width: 98px;
+          height: 98px;
+          bottom: 8px;
+        }
+
+        .touch-joystick-base {
+          width: 68px;
+          height: 68px;
+        }
+
+        .touch-joystick-knob {
+          width: 34px;
+          height: 34px;
+        }
+
+        kbd,
+        .icon-button {
+          min-width: 44px;
+          padding: 5px 7px;
+          font-size: 11px;
+        }
+      }
     </style>
 
     <!--
