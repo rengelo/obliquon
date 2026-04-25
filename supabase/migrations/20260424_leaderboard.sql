@@ -9,6 +9,7 @@ create table if not exists public.leaderboard_runs (
   consumed_by_name text,
   submitted_grade integer,
   submitted_score integer,
+  submitted_level_score integer,
   submitted_time_ms integer
 );
 
@@ -17,6 +18,7 @@ create table if not exists public.leaderboard_scores (
   created_at timestamptz not null default timezone('utc', now()),
   player_name text not null check (char_length(player_name) between 1 and 20),
   score integer not null check (score >= 0),
+  level_score integer not null default 0,
   grade integer not null check (grade between 1 and 999),
   time_ms integer not null check (time_ms between 1000 and 7200000),
   run_id uuid not null unique references public.leaderboard_runs(id) on delete restrict,
@@ -24,14 +26,24 @@ create table if not exists public.leaderboard_scores (
   metadata jsonb not null default '{}'::jsonb
 );
 
+alter table public.leaderboard_runs
+  add column if not exists submitted_level_score integer;
+
+alter table public.leaderboard_scores
+  add column if not exists level_score integer not null default 0;
+
+update public.leaderboard_scores
+set level_score = score
+where level_score is null or level_score = 0;
+
 create index if not exists leaderboard_scores_score_idx
   on public.leaderboard_scores (score desc, created_at asc);
 
 create index if not exists leaderboard_scores_grade_score_idx
-  on public.leaderboard_scores (grade, score desc, created_at asc);
+  on public.leaderboard_scores (grade, level_score desc, time_ms asc, created_at asc);
 
 create index if not exists leaderboard_scores_grade_time_idx
-  on public.leaderboard_scores (grade, time_ms asc, created_at asc);
+  on public.leaderboard_scores (grade, time_ms asc, level_score desc, created_at asc);
 
 alter table public.leaderboard_runs enable row level security;
 alter table public.leaderboard_scores enable row level security;
@@ -51,6 +63,7 @@ as $$
       select jsonb_agg(row_to_json(t))
       from (
         select player_name, score, grade, time_ms, created_at
+        , level_score
         from public.leaderboard_scores
         order by score desc, time_ms asc, created_at asc
         limit 20
@@ -60,10 +73,10 @@ as $$
     (
       select row_to_json(t)
       from (
-        select player_name, score, grade, time_ms, created_at
+        select player_name, score, level_score, grade, time_ms, created_at
         from public.leaderboard_scores
         where grade = target_grade
-        order by score desc, time_ms asc, created_at asc
+        order by level_score desc, time_ms asc, created_at asc
         limit 1
       ) as t
     ),
@@ -71,10 +84,10 @@ as $$
     (
       select row_to_json(t)
       from (
-        select player_name, score, grade, time_ms, created_at
+        select player_name, score, level_score, grade, time_ms, created_at
         from public.leaderboard_scores
         where grade = target_grade
-        order by time_ms asc, score desc, created_at asc
+        order by time_ms asc, level_score desc, created_at asc
         limit 1
       ) as t
     )

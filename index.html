@@ -1226,6 +1226,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
 
       const state = {
         score: 0,
+        levelScore: 0,
         grade: 1,
         lives: 3,
         paused: false,
@@ -1386,6 +1387,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
         state.levelWon = false;
         state.paused = false;
         state.exploding = false;
+        state.levelScore = 0;
         state.stageElapsedMs = 0;
         state.stagePenaltySteps = 0;
         state.stageIntroMs = STAGE_INTRO_MS;
@@ -1914,6 +1916,8 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
       function activatePlayerRespawn() {
         state.respawnMs = 0;
         state.player.active = true;
+        state.player.vx = 0;
+        state.player.vy = 0;
         state.player.invincible = PLAYER_RESPAWN_INVINCIBLE_TICKS;
         statusEl.textContent = "Roll over every blinking beacon. Avoid the star cutters.";
       }
@@ -1941,6 +1945,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
             if (Math.hypot(fragment.x - enemy.x, fragment.y - enemy.y) < enemy.r + fragment.r + 2) {
               defeatEnemyTemporarily(enemy);
               state.score += 200;
+              state.levelScore += 200;
               awardExtraBalls();
               state.flash = 5;
             }
@@ -2112,6 +2117,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
           if (Math.hypot(state.player.x - b.x, state.player.y - b.y) < state.player.r + 12) {
             b.on = false;
             state.score += 100 + state.grade * 10;
+            state.levelScore += 100 + state.grade * 10;
             awardExtraBalls();
             state.flash = 8;
             collected = true;
@@ -2122,6 +2128,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
           state.levelWon = true;
           state.campaignWon = state.grade >= loadedMaps.length;
           state.score += 1000 + state.grade * 250;
+          state.levelScore += 1000 + state.grade * 250;
           awardExtraBalls();
           const result = buildStageResult();
           state.stageResult = result;
@@ -2134,6 +2141,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
       function loseLife() {
         state.lives -= 1;
         state.score -= 100;
+        state.levelScore -= 100;
         state.shake = 16;
         updateHud();
         if (state.lives <= 0) {
@@ -2181,6 +2189,8 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
           if (state.respawnMs === 0) {
             activatePlayerRespawn();
           }
+        } else if (!state.player.active && !state.exploding) {
+          activatePlayerRespawn();
         } else {
           updatePlayer();
           collectBeacons();
@@ -2194,6 +2204,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
         const steps = Math.floor(state.stageElapsedMs / STAGE_PENALTY_INTERVAL_MS);
         while (state.stagePenaltySteps < steps) {
           state.score -= STAGE_PENALTY_POINTS;
+          state.levelScore -= STAGE_PENALTY_POINTS;
           state.stagePenaltySteps += 1;
           awardExtraBalls();
         }
@@ -2214,7 +2225,8 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
           grade: state.grade,
           timeMs: state.stageElapsedMs,
           penalty,
-          score: state.score
+          score: state.score,
+          levelScore: state.levelScore
         };
       }
 
@@ -2300,6 +2312,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
               runId: state.currentRunId,
               playerName: state.playerName,
               score: result.score,
+              levelScore: result.levelScore,
               grade: result.grade,
               timeMs: submittedTimeMs
             })
@@ -2328,6 +2341,10 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
         return `${entry.player_name}  ${String(entry.score).padStart(5, "0")}  G${entry.grade}`;
       }
 
+      function entryGradeScore(entry) {
+        return Number.isFinite(entry?.level_score) ? entry.level_score : entry?.score ?? 0;
+      }
+
       function fillLeaderboardList(listEl, entries, emptyText) {
         listEl.innerHTML = "";
         if (!Array.isArray(entries) || entries.length === 0) {
@@ -2338,7 +2355,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
         }
         for (const entry of entries) {
           const li = document.createElement("li");
-          li.textContent = `${entry.player_name}  ${String(entry.score).padStart(5, "0")}  ${formatTime(entry.time_ms)}`;
+          li.textContent = `${entry.player_name}  ${String(entryGradeScore(entry)).padStart(5, "0")}  ${formatTime(entry.time_ms)}`;
           listEl.appendChild(li);
         }
       }
@@ -2400,7 +2417,8 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
               grade: state.grade,
               timeMs: state.stageElapsedMs,
               penalty: state.stagePenaltySteps * STAGE_PENALTY_POINTS,
-              score: state.score
+              score: state.score,
+              levelScore: state.levelScore
             },
             {
               ok: true,
@@ -2650,7 +2668,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
       }
 
       function stageShareText(result) {
-        return `I cleared Grade ${result.grade} in ${formatTime(result.timeMs)} on Obliquon with score ${result.score}.`;
+        return `I cleared Grade ${result.grade} in ${formatTime(result.timeMs)} on Obliquon with grade score ${result.levelScore} and total score ${result.score}.`;
       }
 
       function buildStageCardCanvas(result) {
@@ -2793,7 +2811,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
           : `Grade ${result.grade} cleared in ${formatTime(result.timeMs)}.`;
         modalTimeEl.textContent = formatTime(result.timeMs);
         modalPenaltyEl.textContent = String(result.penalty).padStart(5, "0");
-        modalScoreEl.textContent = String(result.score).padStart(5, "0");
+        modalScoreEl.textContent = String(result.levelScore).padStart(5, "0");
         const text = stageShareText(result);
         const url = window.location.href || "https://example.com";
         const encodedText = encodeURIComponent(text);
@@ -2850,6 +2868,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
 
       function restartGame() {
         state.score = 0;
+        state.levelScore = 0;
         state.grade = 1;
         state.lives = 3;
         state.gameOver = false;

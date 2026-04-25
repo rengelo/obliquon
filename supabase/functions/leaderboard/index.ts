@@ -10,6 +10,7 @@ type SubmitScoreBody = {
   runId: string;
   playerName: string;
   score: number;
+  levelScore: number;
   grade: number;
   timeMs: number;
 };
@@ -68,6 +69,9 @@ async function submitScore(body: SubmitScoreBody, origin: string | null) {
   if (!Number.isInteger(body.score) || body.score < 0 || body.score > 100000000) {
     return badRequest("score must be an integer between 0 and 100000000", origin);
   }
+  if (!Number.isInteger(body.levelScore) || body.levelScore < -100000000 || body.levelScore > 100000000) {
+    return badRequest("levelScore must be an integer between -100000000 and 100000000", origin);
+  }
   if (!Number.isInteger(body.grade) || body.grade < 1 || body.grade > 999) {
     return badRequest("grade must be an integer between 1 and 999", origin);
   }
@@ -109,6 +113,7 @@ async function submitScore(body: SubmitScoreBody, origin: string | null) {
     .insert({
       player_name: playerName,
       score: body.score,
+      level_score: body.levelScore,
       grade: body.grade,
       time_ms: body.timeMs,
       run_id: body.runId
@@ -126,6 +131,7 @@ async function submitScore(body: SubmitScoreBody, origin: string | null) {
       consumed_by_name: playerName,
       submitted_grade: body.grade,
       submitted_score: body.score,
+      submitted_level_score: body.levelScore,
       submitted_time_ms: body.timeMs
     })
     .eq("id", body.runId)
@@ -146,7 +152,7 @@ async function getLeaderboards(body: GetLeaderboardsBody, origin: string | null)
 
   const { data: allTime, error: allTimeError } = await supabase
     .from("leaderboard_scores")
-    .select("player_name, score, grade, time_ms, created_at")
+    .select("player_name, score, level_score, grade, time_ms, created_at")
     .order("score", { ascending: false })
     .order("time_ms", { ascending: true })
     .order("created_at", { ascending: true })
@@ -159,9 +165,9 @@ async function getLeaderboards(body: GetLeaderboardsBody, origin: string | null)
 
   const { data: bestScores, error: bestScoreError } = await supabase
     .from("leaderboard_scores")
-    .select("player_name, score, grade, time_ms, created_at")
+    .select("player_name, score, level_score, grade, time_ms, created_at")
     .eq("grade", body.grade)
-    .order("score", { ascending: false })
+    .order("level_score", { ascending: false })
     .order("time_ms", { ascending: true })
     .order("created_at", { ascending: true })
     .limit(5);
@@ -173,10 +179,10 @@ async function getLeaderboards(body: GetLeaderboardsBody, origin: string | null)
 
   const { data: fastestTimes, error: fastestTimeError } = await supabase
     .from("leaderboard_scores")
-    .select("player_name, score, grade, time_ms, created_at")
+    .select("player_name, score, level_score, grade, time_ms, created_at")
     .eq("grade", body.grade)
     .order("time_ms", { ascending: true })
-    .order("score", { ascending: false })
+    .order("level_score", { ascending: false })
     .order("created_at", { ascending: true })
     .limit(5);
 
