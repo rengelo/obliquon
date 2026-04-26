@@ -153,20 +153,28 @@
       }
 
       .hud span {
-        color: #d8e5ea;
         font-family: "Courier New", monospace;
         font-size: 15px;
         text-transform: uppercase;
         white-space: nowrap;
       }
 
-      .hud strong {
+      .hud span:nth-of-type(odd) {
+        color: #d8e5ea;
+      }
+
+      .hud span:nth-of-type(odd) strong {
         color: #ffffff;
         font-weight: 700;
       }
 
-      .hud .timer strong {
-        color: #ffd978;
+      .hud span:nth-of-type(even) {
+        color: #e8c957;
+      }
+
+      .hud span:nth-of-type(even) strong {
+        color: var(--gold);
+        font-weight: 700;
       }
 
       canvas {
@@ -1072,9 +1080,9 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
             <h1>OBLIQUON</h1>
             <div class="hud" aria-live="polite">
               <span>Score <strong id="score">00000</strong></span>
-              <span>Level <strong id="level-score">00000</strong></span>
+              <span>Grade Score <strong id="level-score">00000</strong></span>
               <span>Grade <strong id="level">1</strong></span>
-              <span>Balls <strong id="lives">3</strong></span>
+              <span>Spheres <strong id="lives">3</strong></span>
               <span class="timer">Time <strong id="timer">00:00</strong></span>
               <button id="music-toggle" class="icon-button" type="button">Music On</button>
             </div>
@@ -1086,7 +1094,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
               <div class="touch-joystick-base"></div>
               <div id="touch-joystick-knob" class="touch-joystick-knob"></div>
             </div>
-            <button id="touch-boom" class="touch-boom" type="button" aria-label="Explode the ball">BOOM</button>
+            <button id="touch-boom" class="touch-boom" type="button" aria-label="Explode the sphere">BOOM</button>
           </div>
 
           <div class="panel">
@@ -1230,6 +1238,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
       const STAGE_PENALTY_POINTS = 50;
       const STAGE_INTRO_MS = 3000;
       const PLAYER_RESPAWN_DELAY_MS = 2000;
+      const EXPLOSION_SHRAPNEL_MS = 1500;
       const PLAYER_RESPAWN_INVINCIBLE_TICKS = 330;
       const DISTANCE_SCORE_PER_10S_AT_MAX_SPEED = 35;
       const FIXED_STEP_MS = 1000 / 120;
@@ -1260,6 +1269,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
         stagePenaltySteps: 0,
         stageIntroMs: 0,
         respawnMs: 0,
+        explosionMs: 0,
         distanceScoreCarry: 0,
         clearModalOpen: false,
         awaitingStart: true,
@@ -1407,6 +1417,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
         state.levelWon = false;
         state.paused = false;
         state.exploding = false;
+        state.explosionMs = 0;
         state.levelScore = 0;
         state.stageElapsedMs = 0;
         state.stagePenaltySteps = 0;
@@ -1910,6 +1921,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
         const p = state.player;
         if (!p.active) return;
         state.exploding = true;
+        state.explosionMs = EXPLOSION_SHRAPNEL_MS;
         p.active = false;
         state.shake = 18;
         statusEl.textContent = "Self-destruction triggered.";
@@ -1930,6 +1942,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
 
       function resolveExplosion() {
         state.exploding = false;
+        state.explosionMs = 0;
         state.fragments = [];
         loseLife();
       }
@@ -1956,7 +1969,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
         awardExtraBalls();
       }
 
-      function updateFragments() {
+      function updateFragments(deltaMs) {
         if (!state.exploding) return;
         const next = [];
         for (const fragment of state.fragments) {
@@ -1989,7 +2002,8 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
         }
 
         state.fragments = next;
-        if (state.fragments.length === 0) {
+        state.explosionMs = Math.max(0, state.explosionMs - deltaMs);
+        if (state.explosionMs === 0) {
           resolveExplosion();
         }
       }
@@ -2181,6 +2195,8 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
         updateHud();
         if (state.lives <= 0) {
           state.gameOver = true;
+          state.stageResult = buildStageResult();
+          recordTerminalScore(state.stageResult);
           statusEl.textContent = IS_MOBILE ? "Game over. Tap to roll again." : "Game over. Press Space to roll again.";
         } else {
           statusEl.textContent = "Hold on. Respawning...";
@@ -2190,6 +2206,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
           state.player.vy = 0;
           state.respawnMs = PLAYER_RESPAWN_DELAY_MS;
           state.exploding = false;
+          state.explosionMs = 0;
           state.fragments = [];
           clearMovementKeys();
           updateJoystickVisual(0, 0);
@@ -2219,7 +2236,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
         if (state.levelWon) return;
         updateEnemyRespawns(deltaMs);
         updateEnemies();
-        updateFragments();
+        updateFragments(deltaMs);
         if (state.respawnMs > 0) {
           state.respawnMs = Math.max(0, state.respawnMs - deltaMs);
           if (state.respawnMs === 0) {
@@ -2250,7 +2267,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
         while (state.score >= state.extraBallThreshold) {
           state.lives += 1;
           state.extraBallThreshold += EXTRA_BALL_POINTS;
-          statusEl.textContent = "Bonus ball awarded.";
+          statusEl.textContent = "Bonus sphere awarded.";
           updateHud();
         }
       }
@@ -2371,6 +2388,12 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
             grade
           })
         });
+      }
+
+      async function recordTerminalScore(result) {
+        if (!state.currentRunId) return;
+        const submissionState = await submitTrustedScore(result);
+        await populateLeaderboard(result, submissionState);
       }
 
       function renderLeaderboardRow(entry) {
@@ -2871,8 +2894,9 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
         stageModalEl.classList.add("is-open");
         stageModalEl.setAttribute("aria-hidden", "false");
         const submissionState = await submitTrustedScore(result);
-        if (submissionState.ok && Number.isInteger(submissionState.gradeRank)) {
-          modalRankEl.textContent = `#${submissionState.gradeRank}`;
+        const gradeRank = Number(submissionState.gradeRank);
+        if (submissionState.ok && Number.isFinite(gradeRank) && gradeRank > 0) {
+          modalRankEl.textContent = `#${gradeRank}`;
         } else if (!submissionState.ok) {
           modalRankEl.textContent = "--";
         }
