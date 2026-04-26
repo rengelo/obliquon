@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Obliquon</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <meta name="description" content="A modern tribute to an arcade oddity: roll the sphere, read the slopes, survive the stars.">
     <meta property="og:type" content="website">
     <meta property="og:title" content="Obliquon">
@@ -2404,7 +2405,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
         return Number.isFinite(entry?.level_score) ? entry.level_score : entry?.score ?? 0;
       }
 
-      function fillLeaderboardList(listEl, entries, emptyText) {
+      function fillLeaderboardList(listEl, entries, emptyText, mode = "score-time") {
         listEl.innerHTML = "";
         if (!Array.isArray(entries) || entries.length === 0) {
           const li = document.createElement("li");
@@ -2414,7 +2415,11 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
         }
         for (const entry of entries) {
           const li = document.createElement("li");
-          li.textContent = `${entry.player_name}  ${String(entryGradeScore(entry)).padStart(5, "0")}  ${formatTime(entry.time_ms)}`;
+          if (mode === "time-only") {
+            li.textContent = `${entry.player_name}  ${formatTime(entry.time_ms)}`;
+          } else {
+            li.textContent = `${entry.player_name}  ${String(entryGradeScore(entry)).padStart(5, "0")}  ${formatTime(entry.time_ms)}`;
+          }
           listEl.appendChild(li);
         }
       }
@@ -2454,7 +2459,7 @@ T 7 5 5 5 5 5 6 G 8 8 7 5 5 5 4
           }
 
           fillLeaderboardList(leaderboardGradeScoreEl, bestScores, "No score yet.");
-          fillLeaderboardList(leaderboardGradeTimeEl, fastestTimes, "No time yet.");
+          fillLeaderboardList(leaderboardGradeTimeEl, fastestTimes, "No time yet.", "time-only");
           if (submissionState.ok) {
             leaderboardStatusEl.textContent = `Submitted as ${state.playerName}.`;
           } else {
